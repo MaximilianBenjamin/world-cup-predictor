@@ -1,0 +1,275 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+  /* pointer position (0–100%) for the ambient background parallax */
+  --px: 50%;
+  --py: 30%;
+}
+
+html, body, #root {
+  min-height: 100vh;
+  min-height: 100dvh; /* dynamic viewport height — no gap under mobile browser chrome */
+  /* Solid fallback FIRST so the notch / home-indicator safe areas and any
+     overscroll bounce paint navy, never black. background-image (not the
+     `background` shorthand) keeps this colour from being reset. */
+  background-color: #0e1436;
+  background-image: radial-gradient(ellipse 120% 90% at 50% -10%, #2a3a7a 0%, #17235a 45%, #0e1436 100%);
+  background-attachment: fixed;
+}
+
+/* Never allow sideways scroll on mobile — long team names must fit, not widen the page. */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+body {
+  font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+    system-ui, sans-serif;
+  color: #fef6ed;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+  text-rendering: optimizeLegibility;
+}
+
+/* Fine film-grain over the whole canvas — the detail that separates "template"
+   from "designed". Static SVG noise, GPU-cheap, non-interactive. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+.ev-pos { color: #50a5b1; }
+.ev-neg { color: #fb7185; }
+
+::selection { background: rgba(241, 96, 13, 0.32); color: #fff; }
+
+*:focus-visible {
+  outline: 2px solid rgba(241, 96, 13, 0.7);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ─────────────────────────  ambient background  ───────────────────────── */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  /* whole field drifts very slightly toward the cursor — depth without motion sickness */
+  transform: translate3d(calc((var(--px) - 50%) * 0.02), calc((var(--py) - 50%) * 0.02), 0);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.aurora span {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(120px);
+  will-change: transform;
+}
+.aurora .a1 { width: 44vw; height: 44vw; top: -16vw; left: -10vw;
+  background: #f1600d; opacity: 0.14; animation: float 28s ease-in-out infinite; }
+.aurora .a2 { width: 38vw; height: 38vw; top: -8vw; right: -12vw;
+  background: #50a5b1; opacity: 0.16; animation: float 32s ease-in-out infinite reverse; }
+.aurora .a3 { width: 32vw; height: 32vw; bottom: -18vw; left: 28vw;
+  background: #2f4ca8; opacity: 0.16; animation: float 36s ease-in-out infinite; }
+
+/* ─────────────────────────  spotlight surfaces  ───────────────────────── */
+/* Cards/buttons that track the cursor. --mx/--my/--active are set by <Spotlight>. */
+.fx-spot {
+  --mx: 50%;
+  --my: 50%;
+  --active: 0;
+  position: relative;
+  isolation: isolate;
+}
+/* the moving glow */
+.fx-spot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  opacity: var(--active);
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    280px circle at var(--mx) var(--my),
+    rgba(241, 96, 13, 0.16),
+    rgba(80, 165, 177, 0.08) 40%,
+    transparent 70%
+  );
+}
+/* the reactive border highlight */
+.fx-spot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  padding: 1px;
+  opacity: var(--active);
+  transition: opacity 0.35s ease;
+  background: radial-gradient(
+    240px circle at var(--mx) var(--my),
+    rgba(255, 255, 255, 0.5),
+    transparent 60%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ─────────────────────────  scroll reveal  ───────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.reveal.shown { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .aurora { transform: none; }
+}
+
+/* ─────────────────────────  3D tilt (Spotlight tilt)  ───────────────────────── */
+/* Parallax rotation toward the cursor. --rx/--ry set by <Spotlight tilt>.
+   preserve-3d lets children with .fx-tz lift off the surface. */
+.fx-tilt {
+  --rx: 0deg;
+  --ry: 0deg;
+  transform: perspective(760px) rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.fx-tz {
+  transform: translateZ(34px);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@media (prefers-reduced-motion: reduce), (hover: none) {
+  .fx-tilt { transform: none; }
+  .fx-tz { transform: none; }
+}
+
+/* ─────────────────────────  magnetic  ───────────────────────── */
+.magnetic { transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1); will-change: transform; }
+
+/* ─────────────────────────  custom cursor  ───────────────────────── */
+.zc-dot, .zc-ring {
+  position: fixed; top: 0; left: 0; z-index: 100;
+  pointer-events: none; border-radius: 9999px;
+  transform: translate3d(-50%, -50%, 0);
+  mix-blend-mode: difference;
+}
+.zc-dot { width: 6px; height: 6px; background: #fff; }
+.zc-ring {
+  width: 34px; height: 34px; border: 1.5px solid rgba(255,255,255,0.7);
+  transition: width 0.22s ease, height 0.22s ease, border-color 0.22s ease, opacity 0.22s ease;
+}
+.zc-ring.zc-hot { width: 52px; height: 52px; border-color: rgba(241,96,13,0.9); }
+@media (prefers-reduced-motion: reduce), (hover: none), (pointer: coarse) {
+  .zc-dot, .zc-ring { display: none; }
+}
+
+/* ─────────────────────────  picks ticker / marquee  ───────────────────────── */
+.ticker {
+  position: relative; overflow: hidden;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(14,20,54,0.5);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+.ticker-track {
+  display: inline-flex; align-items: center; gap: 2.25rem;
+  white-space: nowrap; padding: 0.5rem 0;
+  animation: marquee 42s linear infinite;
+  will-change: transform;
+}
+.ticker:hover .ticker-track { animation-play-state: paused; }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track { animation: none; }
+  .ticker { -webkit-mask-image: none; mask-image: none; }
+}
+
+/* ─────────────────────────  intro loader  ───────────────────────── */
+.intro {
+  position: fixed; inset: 0; z-index: 90;
+  display: grid; place-items: center;
+  background: radial-gradient(ellipse 120% 90% at 50% -10%, #2a3a7a 0%, #17235a 45%, #0e1436 100%);
+  animation: intro-out 0.5s cubic-bezier(0.7, 0, 0.84, 0) 0.62s forwards;
+}
+.intro .wm {
+  font-weight: 900; font-size: clamp(2.5rem, 9vw, 5rem); letter-spacing: -0.04em;
+  background: linear-gradient(100deg, #fef6ed, #f4915a 50%, #f1600d);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: intro-wm 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.intro .wipe {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, #f1600d, transparent);
+  animation: intro-wipe 0.7s ease-out both;
+}
+@keyframes intro-wm { from { opacity: 0; transform: translateY(14px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes intro-wipe { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes intro-out { to { opacity: 0; visibility: hidden; } }
+
+/* ─────────────────────────  kinetic hero (per-word mask reveal)  ───────────────────────── */
+.kinetic { display: inline-block; }
+.kinetic .w { display: inline-block; overflow: hidden; vertical-align: top; }
+.kinetic .w > span {
+  display: inline-block;
+  transform: translateY(105%);
+  animation: word-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes word-rise { to { transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .kinetic .w > span { transform: none; animation: none; }
+}
+
+/* Slim, dark scrollbar so overflow panels don't break the aesthetic. */
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* Text gradient for the wordmark. */
+.text-grad {
+  background: linear-gradient(100deg, #fef6ed 0%, #f4915a 50%, #f1600d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+/* animated sheen sweeping the wordmark once in a while */
+.text-grad-sheen {
+  background: linear-gradient(100deg, #fef6ed 0%, #f4915a 42%, #fff 50%, #f1600d 58%, #f1600d 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: sheen 6s ease-in-out infinite;
+}
+@keyframes sheen {
+  0%, 65% { background-position: 120% 0; }
+  100% { background-position: -20% 0; }
+}
+
+/* Lightweight route transition — a CSS fade/slide on the page container keyed by
+   route (in App.tsx). Replaces the View Transitions API, which stalled
+   navigation on some browsers. */
+.page-enter { animation: page-in 0.34s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@keyframes page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .page-enter { animation: none; } }

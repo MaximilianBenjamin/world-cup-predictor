@@ -1,0 +1,41 @@
+[project]
+name = "zuba"
+version = "1.0.0"
+description = "Match predictions for the 2026 FIFA World Cup from an ensemble of statistical and machine-learning models"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "catboost>=1.2",
+    "fastapi>=0.115",
+    "lightgbm>=4.6",
+    "numpy>=2.0",
+    "pandas>=2.2",
+    "penaltyblog>=1.11",
+    "scikit-learn>=1.8",
+    "scipy>=1.14",
+    "uvicorn[standard]>=0.30",
+    "xgboost>=3.0",
+]
+
+[project.scripts]
+zuba = "zuba.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.6", "httpx>=0.27"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/zuba"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
