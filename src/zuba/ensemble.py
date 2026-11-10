@@ -22,6 +22,7 @@ from dataclasses import dataclass, field
 import numpy as np
 import pandas as pd
 
+from zuba.data import MAJOR_TOURNAMENTS
 from zuba.models.catboost_pi import CatBoostPi
 from zuba.models.dixon_coles import DixonColes
 from zuba.models.elo_lgbm import EloLGBM
@@ -100,14 +101,15 @@ class Ensemble:
         elo_home, elo_away = self._elo(home_team), self._elo(away_team)
 
         if {home_team, away_team} <= self.dixon_coles.teams:
-            result["dixon_coles"], goals["dixon_coles"] = self.dixon_coles.predict(home_team, away_team)
+            result["dixon_coles"], goals["dixon_coles"] = self.dixon_coles.predict(
+                home_team, away_team, neutral)
 
-        result["catboost_pi"] = self.catboost.predict(home_team, away_team)
-        result["elo_lgbm"] = self.lgbm.predict(home_team, away_team, elo_home, elo_away)
+        result["catboost_pi"] = self.catboost.predict(home_team, away_team, neutral)
+        result["elo_lgbm"] = self.lgbm.predict(home_team, away_team, elo_home, elo_away, neutral)
         result["zeileis_groll"] = self.zeileis.predict_proba(pd.DataFrame([{
             "home_team": home_team, "away_team": away_team,
             "elo_home": elo_home, "elo_away": elo_away, "neutral": neutral,
-            "major": tournament != "Friendly", "competitive": tournament != "Friendly",
+            "major": tournament in MAJOR_TOURNAMENTS, "competitive": tournament != "Friendly",
         }]))[0]
 
         # penaltyblog's pi-rating probabilities include a fixed home advantage,
