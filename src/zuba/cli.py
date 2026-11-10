@@ -4,6 +4,7 @@
     uv run zuba predict                      # price every unplayed fixture
     uv run zuba pick Arsenal Chelsea         # one-off prediction
     uv run zuba backtest                     # score the models on past seasons
+    uv run zuba archive                      # price the finished 2026 World Cup (see markets.py)
     uv run zuba table                        # current table and predicted final table
     uv run zuba snapshot save                # write fixtures and predictions to data/live/site.json
     uv run zuba snapshot load                # read them back into the database
@@ -45,6 +46,7 @@ def main(argv: list[str] | None = None) -> int:
     backtest.add_argument("years", nargs="*", type=int,
                           help="World Cup only: tournaments to score (default: 2018 2022 2026)")
 
+    sub.add_parser("archive", help="price the finished 2026 World Cup from pre-tournament data")
     sub.add_parser("table", help="write the current and predicted Premier League tables")
 
     snapshot = sub.add_parser("snapshot", help="save or load fixtures and predictions as JSON")
@@ -85,6 +87,10 @@ def main(argv: list[str] | None = None) -> int:
         from zuba.markets import predict_upcoming
 
         print(f"{predict_upcoming(args.competition)} matches priced")
+    elif args.command == "archive":
+        from zuba.markets import price_world_cup_archive
+
+        print(f"{price_world_cup_archive()} World Cup matches priced")
     elif args.command == "table":
         from zuba import table
 

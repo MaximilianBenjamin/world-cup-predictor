@@ -155,3 +155,42 @@ def predict_upcoming(competition: str = "epl", conn: sqlite3.Connection | None =
     )
     conn.commit()
     return len(priced)
+
+
+WORLD_CUP_2026_OPENED = "2026-06-11"
+
+
+def price_world_cup_archive(conn: sqlite3.Connection | None = None) -> int:
+    """Price finished 2026 World Cup matches that have no stored prediction.
+
+    The models are trained only on matches played before the tournament's
+    opening day, the same cut-off the backtest uses, so no price has seen any
+    World Cup result. These are not the prices the site showed during the
+    tournament (those came from an earlier version and were not kept); they
+    are what this version would have said on the eve of it. Returns how many
+    matches were priced.
+    """
+    conn = conn or get_connection()
+    fixtures = conn.execute(
+        "SELECT m.match_id, m.home_team, m.away_team, m.neutral FROM matches m "
+        "LEFT JOIN predictions p USING (match_id) "
+        "WHERE m.competition = 'wc' AND m.date >= ? AND p.match_id IS NULL",
+        (WORLD_CUP_2026_OPENED,),
+    ).fetchall()
+    if not fixtures:
+        return 0
+    model = Ensemble().fit(max_date=WORLD_CUP_2026_OPENED)
+    now = dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat()
+    rows = []
+    for f in fixtures:
+        probs = fixture_probs(model, f["home_team"], f["away_team"], bool(f["neutral"]))
+        if probs is not None:
+            rows.append((f["match_id"], now, f"{MODEL_VERSION}, data to {WORLD_CUP_2026_OPENED}",
+                         json.dumps(probs)))
+    conn.executemany(
+        "INSERT INTO predictions (match_id, generated_at, model_version, probs) VALUES (?, ?, ?, ?)",
+        rows,
+    )
+    conn.commit()
+    return len(rows)
+
