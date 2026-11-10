@@ -48,6 +48,10 @@ body {
   .ticker:hover .ticker-track { animation-play-state: paused; }
 }
 
+/* Written out here because Tailwind only emits a keyframe when its animate-*
+   utility is used, and the ticker sets its animation in plain CSS. */
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
 @media (prefers-reduced-motion: reduce) {
   .ticker-track, .animate-rise { animation: none !important; }
   * { transition-duration: 0.01ms !important; }
