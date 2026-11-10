@@ -12,24 +12,26 @@ Each World Cup below was predicted using only matches played before that tournam
 
 | Model | Log loss | Brier | Right result |
 |---|---|---|---|
-| Ensemble (average) | 0.973 | 0.577 | 58% |
-| Dixon-Coles | **0.955** | **0.568** | 58% |
-| CatBoost on pi-ratings | 1.000 | 0.595 | 54% |
-| Zeileis/Groll ensemble | 1.006 | 0.586 | 57% |
-| LightGBM on Elo and form | 1.047 | 0.619 | 52% |
+| Ensemble (average) | 0.960 | 0.567 | 58% |
+| Dixon-Coles | **0.929** | **0.547** | 60% |
+| CatBoost on pi-ratings | 0.975 | 0.580 | 58% |
+| LightGBM on Elo and form | 0.979 | 0.579 | 57% |
+| Zeileis/Groll ensemble | 0.995 | 0.582 | 55% |
 | Baseline: 1/3 on each result | 1.099 | 0.667 | 40% |
 
 Lower is better for log loss and Brier score. The baseline's "right result" is the share of home wins, because it ties every game and falls back to the first option.
 
-By tournament, the ensemble's log loss was 0.960 in 2018, 1.133 in 2022 and 0.875 in 2026. Qatar 2022 was worse than guessing: Saudi Arabia beat Argentina, Japan beat Germany and Spain, and Morocco topped its group. Every model missed those.
+By tournament, the ensemble's log loss was 0.942 in 2018, 1.100 in 2022 and 0.877 in 2026. Qatar 2022 was no better than guessing: Saudi Arabia beat Argentina, Japan beat Germany and Spain, and Morocco topped its group. Every model missed those.
 
-The ensemble doesn't beat its best member. Dixon-Coles alone scores slightly better, and LightGBM, the weakest model, drags the average down. Weighting the models by their backtest scores, or dropping LightGBM, would be the next thing to try.
+The ensemble doesn't beat its best member. Dixon-Coles alone scores better in all three tournaments. With only 168 games there is too little to fit blend weights on without overfitting them, so the World Cup ensemble stays a plain average.
 
-Over/under 2.5 goals is no better than a coin flip (log loss 0.698 against 0.693 for 50/50). The dataset has no shots or expected-goals data for national teams, and goals alone are too noisy to predict totals.
+Over/under 2.5 goals is barely better than a coin flip (log loss 0.690 against 0.693 for 50/50). The dataset has no shots or expected-goals data for national teams, and goals alone are too noisy to predict totals.
+
+These numbers are from version 2.0. Version 1.0 scored 0.973 for the ensemble and 0.955 for Dixon-Coles on the same games. The gain came from four fixes: neutral venues are now flagged in every model (before, the first-listed team was priced as if at home), the boosted models stop adding trees when a held-out slice stops improving, the Zeileis/Groll calibration is learned on matches its classifiers hadn't seen, and the tournament-importance flag at prediction time matches the one used in training.
 
 168 games is a small sample, so gaps of 0.01 in log loss between models are within noise.
 
-Run it yourself with `uv run zuba backtest` (about 5 minutes).
+Run it yourself with `uv run zuba backtest --competition wc` (about 2 minutes).
 
 ## How it works
 
