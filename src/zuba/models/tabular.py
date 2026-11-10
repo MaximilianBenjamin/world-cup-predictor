@@ -73,7 +73,7 @@ def _best_tree_count(kind: str, X: np.ndarray, y: np.ndarray) -> int:
         model.fit(*train, eval_set=held, early_stopping_rounds=PATIENCE)
         best = model.get_best_iteration()
     elif kind == "lightgbm":
-        model.fit(*train, eval_set=[held],
+        model.fit(*train, eval_X=held[0], eval_y=held[1],
                   callbacks=[lgb.early_stopping(PATIENCE, verbose=False)])
         best = model.best_iteration_
     else:

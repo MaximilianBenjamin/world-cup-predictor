@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "catboost>=1.2",
     "fastapi>=0.115",
-    "lightgbm>=4.6",
+    "lightgbm>=4.7",
     "numpy>=2.0",
     "pandas>=2.2",
     "penaltyblog>=1.11",

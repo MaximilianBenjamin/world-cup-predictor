@@ -2755,7 +2755,7 @@ dev = [
 requires-dist = [
     { name = "catboost", specifier = ">=1.2" },
     { name = "fastapi", specifier = ">=0.115" },
-    { name = "lightgbm", specifier = ">=4.6" },
+    { name = "lightgbm", specifier = ">=4.7" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", specifier = ">=2.2" },
     { name = "penaltyblog", specifier = ">=1.11" },
