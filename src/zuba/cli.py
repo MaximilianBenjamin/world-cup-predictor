@@ -39,7 +39,8 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("predict", parents=[shared], help="price every unplayed fixture in the database")
 
     backtest = sub.add_parser("backtest", parents=[shared], help="score the models on past seasons")
-    backtest.add_argument("years", nargs="*", type=int, help="default: 2018 2022 2026")
+    backtest.add_argument("years", nargs="*", type=int,
+                          help="World Cup only: tournaments to score (default: 2018 2022 2026)")
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -76,8 +77,12 @@ def main(argv: list[str] | None = None) -> int:
         from zuba.markets import predict_upcoming
 
         print(f"{predict_upcoming(args.competition)} matches priced")
+    elif args.command == "backtest" and args.competition == "epl":
+        from zuba.evaluate.report import print_report, run_premier_league
+
+        print_report(run_premier_league())
     elif args.command == "backtest":
-        from zuba.backtest import run
+        from zuba.evaluate.world_cup import run
 
         results, goals = run(args.years or None)
         print("\nMatch result, group stages\n")
