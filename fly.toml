@@ -1,0 +1,38 @@
+# Fly.io config for the hosted site.
+#
+# First-time setup (needs a Fly.io account):
+#   fly auth login
+#   fly launch --copy-config --no-deploy     # pick an app name; it replaces the one below
+#   fly deploy
+#
+# For the daily refresh to redeploy on its own, create a deploy token with
+# `fly tokens create deploy` and save it as the repository secret FLY_API_TOKEN.
+#
+# The machine stops when idle and starts on the next request.
+
+app = "zuba-premier-league"
+primary_region = "jnb"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ZUBA_LINEUPS = "1"
+
+[http_service]
+  internal_port = 8001
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "30s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
