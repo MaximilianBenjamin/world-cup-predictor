@@ -1,0 +1,85 @@
+# Daily refresh: fetch new Premier League results and fixtures, refit the
+# models, price every unplayed match, simulate the rest of the season for the
+# predicted table, and commit the updated data. If a Fly.io
+# token is configured, the site is then redeployed with the new predictions.
+#
+# GitHub only runs scheduled workflows from the default branch.
+
+name: Refresh
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 7 * * *"      # 09:00 South African time
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen --no-dev
+
+      # The database is not committed; yesterday's snapshot is the starting point.
+      - name: Load yesterday's fixtures and predictions
+        run: uv run zuba snapshot load
+
+      # Any failure below stops the run before the commit, so the site keeps
+      # serving the last good predictions.
+      - name: Fetch results and fixtures
+        run: uv run zuba fetch
+      - name: Price unplayed matches
+        run: uv run zuba predict
+      - name: Build the current and predicted tables
+        run: uv run zuba table
+        # Fails in the first weeks of a season, until all 20 clubs have played.
+        continue-on-error: true
+      - name: Save the snapshot
+        run: uv run zuba snapshot save
+
+      - name: Commit the updated data
+        id: commit
+        run: |
+          git add data/clubs data/live
+          # saved_at changes on every run; only commit when something else did.
+          if git diff --cached --quiet -I '"saved_at"' -I '"generated_at"'; then
+            echo "Nothing new."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Daily refresh: results, fixtures and predictions [skip ci]"
+          git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  deploy:
+    needs: refresh
+    if: needs.refresh.outputs.changed == 'true' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+    steps:
+      - name: Skip when no Fly.io token is configured
+        if: env.FLY_API_TOKEN == ''
+        run: echo "FLY_API_TOKEN is not set; nothing deployed."
+      - uses: actions/checkout@v4
+        if: env.FLY_API_TOKEN != ''
+        with:
+          ref: ${{ github.ref_name }}     # the branch tip, including the refresh commit
+      - uses: superfly/flyctl-actions/setup-flyctl@master
+        if: env.FLY_API_TOKEN != ''
+      - run: flyctl deploy --remote-only
+        if: env.FLY_API_TOKEN != ''
