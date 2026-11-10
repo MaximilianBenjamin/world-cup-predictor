@@ -140,3 +140,47 @@ def build_international_elo(
     if min_date:
         rated = rated[rated["date"] >= pd.Timestamp(min_date)].reset_index(drop=True)
     return rated, elo
+
+
+# ---- clubs ------------------------------------------------------------------
+
+CLUB_K = 20.0
+CLUB_HOME_ADVANTAGE = 60.0
+# A club first seen in the second tier starts lower than one first seen in the top flight.
+CLUB_START = {"epl": 1500.0, "championship": 1350.0}
+
+
+def add_club_elo(df: pd.DataFrame, k: float = CLUB_K,
+                 home_advantage: float = CLUB_HOME_ADVANTAGE) -> pd.DataFrame:
+    """Add pre-match elo_home, elo_away and elo_diff to club matches.
+
+    df needs date, league, home_team, away_team, home_goals, away_goals, already
+    in date order. Rows without a score (fixtures not yet played) get ratings
+    but don't change them.
+
+    The Premier League and the Championship are rated in one pool. The two only
+    meet through promotion and relegation, so a promoted side's rating overstates
+    it against top-flight teams; models that use these ratings also get a count
+    of each side's recent top-flight games to correct for that.
+    """
+    ratings: dict[str, float] = {}
+    elo_home, elo_away = [], []
+    for row in df.itertuples(index=False):
+        start = CLUB_START.get(row.league, DEFAULT_RATING)
+        r_h = ratings.setdefault(row.home_team, start)
+        r_a = ratings.setdefault(row.away_team, start)
+        elo_home.append(r_h)
+        elo_away.append(r_a)
+        if pd.isna(row.home_goals) or pd.isna(row.away_goals):
+            continue
+        gd = int(row.home_goals) - int(row.away_goals)
+        won = 1.0 if gd > 0 else 0.0 if gd < 0 else 0.5
+        delta = k * _goal_diff_multiplier(gd) * (won - _expected(r_h + home_advantage, r_a))
+        ratings[row.home_team] = r_h + delta
+        ratings[row.away_team] = r_a - delta
+
+    out = df.copy()
+    out["elo_home"] = elo_home
+    out["elo_away"] = elo_away
+    out["elo_diff"] = out["elo_home"] - out["elo_away"]
+    return out
