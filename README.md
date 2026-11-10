@@ -1,12 +1,14 @@
-# zuba: World Cup 2026 match predictor
+# zuba: football match predictions, tested against the bookmakers
 
-Zuba predicts international football matches. It trains five models on every international result since 2006, averages their probabilities, and shows them on a small web app as fair odds for the match result, goals and same-match combinations. It ran live through the 2026 World Cup, updating fixtures from ESPN each morning.
+Zuba predicts Premier League matches and shows the predictions as fair odds: the price each outcome would have if the model's probability were exactly right. It blends several statistical and machine-learning models, refits them every day through the season, and publishes its own record, including how far behind the bookmakers it is.
 
-![Upcoming games page](docs/slate.png)
+It started as a World Cup 2026 predictor. That model ran live through the tournament and is kept here, with its results, as a second competition.
+
+![Premier League fixtures with fair odds](docs/slate.png)
 
 ## Premier League backtest
 
-Version 2.0 adds a Premier League stack. It was tested on 3,520 matches from 2017-18 to 2026-27. Every match was predicted from earlier matches only, with the team models refitted each week, and scored against bookmakers' closing odds with the margin removed.
+The Premier League models were tested on 3,520 matches from 2017-18 to 2026-27. Every match was predicted from earlier matches only, with the team models refitted each week, and scored against bookmakers' closing odds with the margin removed.
 
 **Match result**
 
@@ -27,7 +29,9 @@ For over/under 2.5 goals the blend scores 0.679, against 0.675 for the bookmaker
 
 The blend weights are fitted on predictions from earlier seasons only. For live fixtures the result is 67% Dixon-Coles and 33% XGBoost; goals are 43% Dixon-Coles, 38% Poisson XGBoost and 19% GAP ratings on shots on target. CatBoost, LightGBM, and GAP on shots and on corners get no weight.
 
-Run it with `uv run zuba backtest --competition epl` (about 90 minutes). Full results are in `docs/backtest_epl.json`.
+Run it with `uv run zuba backtest` (about 90 minutes). Full results are in `docs/backtest_epl.json`, and the site's Record page shows them with a calibration chart and this season's predictions against results.
+
+![Record page: the model against the bookmakers](docs/record.png)
 
 ## World Cup backtest
 
@@ -60,6 +64,37 @@ Run it yourself with `uv run zuba backtest --competition wc` (about 2 minutes).
 
 ## How it works
 
+### Premier League
+
+```
+data/clubs/   Premier League and Championship results, shots, shots on target
+              and corners since 2008-09 (football-data.co.uk), xG where available
+        │
+        ├─ club Elo, pi-ratings, rolling form over each team's earlier matches
+        │
+        │  match result
+        ├─ Dixon-Coles ............ scoreline grid, recent matches weighted more
+        ├─ XGBoost ................ form, shots, shots on target, corners, xG, rest days
+        ├─ CatBoost ............... pi-ratings
+        ├─ LightGBM ............... Elo + form
+        │
+        │  goals
+        ├─ Dixon-Coles ............ same grid
+        ├─ Poisson XGBoost ........ expected goals for each side
+        └─ GAP (Wheatcroft 2020) .. ratings on shots, shots on target and corners
+                │
+                ▼
+        weighted blend → scoreline grid adjusted to match it → fair odds
+```
+
+The Championship is included so promoted teams arrive with ratings. Bookmaker odds are never a model input; they are used only in the backtest, as the yardstick.
+
+The blend weights minimise log loss on predictions made for earlier seasons, so a model only gets weight if it adds something the others lack. After blending, the Dixon-Coles scoreline grid is rescaled until its result and over/under 2.5 probabilities equal the blended ones, so every market on a match page agrees with every other.
+
+Each day a GitHub Actions run downloads new results and fixtures, refits the models, prices every unplayed match and commits the result to `data/live/site.json`. The hosted app serves that file and fits nothing itself. A prediction is never rewritten once its match has been played, so the season record on the site compares results with what the model said beforehand.
+
+### World Cup
+
 ```
 data/international_results.csv   (49,000 matches since 1872)
         │
@@ -74,12 +109,14 @@ data/international_results.csv   (49,000 matches since 1872)
         └─ GAP (Wheatcroft 2020) .. attack/defence ratings → over/under
                 │
                 ▼
-        average → SQLite → FastAPI → React site
+        plain average → fair odds
 ```
 
 Every feature for a match comes from games played before it. Elo and pi-ratings are recorded before each result is applied, form skips the current game, and the backtest cuts the data off at each tournament's opening day.
 
-Combined picks are read off the Dixon-Coles scoreline grid. "Spain to win and over 2.5 goals" is the sum of every scoreline where both happen. Multiplying the two separate probabilities would be wrong, because a team that wins tends to score more.
+### Combined picks and fair odds
+
+Combined picks are read off the scoreline grid. "Spain to win and over 2.5 goals" is the sum of every scoreline where both happen. Multiplying the two separate probabilities would be wrong, because a team that wins tends to score more.
 
 Fair odds are 1 / probability. The site shows no bookmaker prices.
 
@@ -95,36 +132,46 @@ Needs Python 3.12+ with [uv](https://docs.astral.sh/uv/), and Node 20+ for the s
 
 ```bash
 uv sync
-uv run zuba pick Brazil Morocco          # one-off prediction (fits every model, about a minute)
-uv run zuba backtest                     # the scores above
-uv run pytest                            # fast tests, no model training
+uv run zuba pick Arsenal Chelsea                    # one-off prediction (about 10 seconds)
+uv run zuba pick Brazil Morocco --competition wc    # World Cup models (about a minute)
+uv run pytest                                       # fast tests, no model training
 ```
 
 To run the site:
 
 ```bash
-uv run zuba fetch                        # fixtures from ESPN (last 3 days to next 25)
+uv run zuba fetch                        # new results, and fixtures from ESPN (3 days back to 25 ahead)
 uv run zuba predict                      # price every unplayed fixture
 cd frontend && npm ci && npm run build && cd ..
 uv run uvicorn zuba.api.app:app --port 8001
 ```
 
-Then open http://localhost:8001. The 2026 tournament is over, so `fetch` only finds games once new ones are scheduled. Set `ZUBA_REFRESH_AT=09:00` to refresh fixtures and predictions daily, and `ZUBA_LINEUPS=1` to pull starting XIs from ESPN about 50 minutes before kickoff.
+Then open http://localhost:8001. If the local database is empty, the app starts from the committed snapshot in `data/live/site.json`, so the last two commands are enough to see the site. Set `ZUBA_REFRESH_AT=09:00` to refresh fixtures and predictions daily, and `ZUBA_LINEUPS=1` to pull starting XIs from ESPN about 50 minutes before kickoff.
+
+Every command takes `--competition wc` for the World Cup models.
+
+### Hosting
+
+`Dockerfile` builds the site and API into one image that serves the committed snapshot; `docker build -t zuba . && docker run -p 8001:8001 zuba` runs it locally. `fly.toml` deploys that image to Fly.io. `.github/workflows/refresh.yml` runs the daily refresh and, if the repository has a `FLY_API_TOKEN` secret, redeploys afterwards. `.github/workflows/ci.yml` runs the linters, tests and frontend build on every push.
 
 ## Layout
 
 ```
 src/zuba/
-  data.py            load the results file
+  data/              load results (clubs, international) and download new ones
   ratings/           Elo, pi-ratings, GAP, confederations
-  models/            Dixon-Coles, CatBoost, LightGBM, Zeileis/Groll
-  stacks/            one model stack per competition: fit everything, blend the predictions
+  features.py        the leak-free feature table for the boosted models
+  models/            Dixon-Coles, boosted trees, Zeileis/Groll
+  stacks/            one model stack per competition, and the blend weights
   markets.py         turn predictions into every market and save them
+  evaluate/          walk-forward backtest, metrics with intervals, bookmaker benchmark
   espn.py            fixtures, scores and lineups
-  backtest.py        score the models on past World Cups
+  snapshot.py        save and load fixtures and predictions as JSON
   cli.py             the `zuba` command
-  api/               FastAPI app, fair-odds board, bet-builder
+  api/               FastAPI app, fair-odds board, combined picks, record
 frontend/            React + Vite + Tailwind
+data/clubs/          one CSV per league and season
+data/live/           the snapshot the hosted site serves
 tests/
 ```
 
@@ -136,5 +183,7 @@ It started as a joint project with my brother, who built the original data scrap
 
 ## Data
 
+- Club results, shots, corners and closing odds: [football-data.co.uk](https://www.football-data.co.uk/).
+- Expected goals for August 2014 to January 2025: Understat.
 - International results: [martj42/international_results](https://github.com/martj42/international_results) (CC0).
 - Fixtures, scores and lineups: ESPN's public scoreboard API.
