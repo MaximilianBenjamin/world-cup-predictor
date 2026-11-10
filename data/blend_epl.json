@@ -1,0 +1,15 @@
+{
+  "result": {
+    "dixon_coles": 0.6652,
+    "catboost_pi": 0.0,
+    "elo_lgbm": 0.0,
+    "form_xgb": 0.3348
+  },
+  "goals": {
+    "dixon_coles": 0.4317,
+    "gap_shots": 0.0,
+    "gap_sot": 0.1909,
+    "gap_corners": 0.0,
+    "goals_xgb": 0.3774
+  }
+}
