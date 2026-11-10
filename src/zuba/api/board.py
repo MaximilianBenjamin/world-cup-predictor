@@ -80,7 +80,8 @@ def _price(market: str, selection: str, probs: Probs, home: str, away: str) -> S
 
 def _match_fields(m: Mapping) -> dict:
     return {
-        "match_id": m["match_id"], "date": m["date"], "kickoff_ts": m["kickoff_ts"],
+        "match_id": m["match_id"], "competition": m.get("competition", "epl"),
+        "date": m["date"], "kickoff_ts": m["kickoff_ts"],
         "home_team": m["home_team"], "away_team": m["away_team"],
         "completed": bool(m["completed"]),
         "home_score": m["home_score"], "away_score": m["away_score"],
@@ -107,6 +108,8 @@ def build_game_summary(match: Mapping, probs: Probs | None) -> GameSummary:
         options = {s: probability(probs, "1x2", s) for s in ("home", "draw", "away")}
         pick = max(options, key=options.get)
         summary.has_prediction = True
+        summary.p_home, summary.p_draw, summary.p_away = (
+            options["home"], options["draw"], options["away"])
         summary.pick_selection = pick
         summary.pick_label = selection_label("1x2", pick, match["home_team"], match["away_team"])
         summary.pick_p = options[pick]

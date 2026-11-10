@@ -19,6 +19,7 @@ class SelectionPrice(BaseModel):
 
 class GameSummary(BaseModel):
     match_id: int
+    competition: str = "epl"        # "epl" | "wc"
     date: str
     kickoff_ts: str | None = None   # ISO with UTC offset; the UI converts it
     home_team: str
@@ -27,6 +28,9 @@ class GameSummary(BaseModel):
     home_score: int | None = None
     away_score: int | None = None
     has_prediction: bool = False
+    p_home: float | None = None
+    p_draw: float | None = None
+    p_away: float | None = None
     # The model's most likely result, if the match has been priced.
     pick_selection: str | None = None   # "home" | "draw" | "away"
     pick_label: str | None = None       # team name or "Draw"
@@ -44,6 +48,7 @@ class GamesResponse(BaseModel):
 
 class MatchBoardResponse(BaseModel):
     match_id: int
+    competition: str = "epl"
     date: str
     kickoff_ts: str | None = None
     home_team: str
@@ -105,3 +110,31 @@ class LineupResponse(BaseModel):
     kickoff_ts: str | None = None
     home: LineupSide | None = None
     away: LineupSide | None = None
+
+
+class SeasonGame(BaseModel):
+    """A finished match with what the model said before kickoff."""
+
+    date: str
+    home_team: str
+    away_team: str
+    home_score: int
+    away_score: int
+    p_home: float
+    p_draw: float
+    p_away: float
+    p_result: float               # probability given to the result that happened
+    correct: bool                 # the most likely result happened
+
+
+class SeasonRecord(BaseModel):
+    season: str
+    matches: int
+    correct: int
+    log_loss: float | None = None       # None until a match has been played
+    games: list[SeasonGame]             # newest first
+
+
+class PerformanceResponse(BaseModel):
+    backtest: dict | None = None        # docs/backtest_epl.json, absent until it has been run
+    season: SeasonRecord

@@ -4,6 +4,8 @@
 
 Endpoints (all read-only apart from /api/combine, which only does arithmetic):
     GET  /api/games            upcoming fixtures with the model's pick for each
+                               (?competition=epl or wc)
+    GET  /api/performance      Premier League backtest scores and this season's record
     GET  /api/board/{id}       every market for one match, with fair odds
     GET  /api/lineups/{id}     starting XIs once ESPN publishes them
     POST /api/combine          price several picks together (bet-builder)
@@ -29,6 +31,7 @@ import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, HTTPException, Request
@@ -37,7 +40,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from zuba import espn
-from zuba.api import board
+from zuba.api import board, performance
 from zuba.api.schemas import (
     CombineRequest,
     CombineResponse,
@@ -46,6 +49,7 @@ from zuba.api.schemas import (
     LineupResponse,
     LineupSide,
     MatchBoardResponse,
+    PerformanceResponse,
 )
 from zuba.data.fetch import update_club_results
 from zuba.db import get_connection
@@ -175,16 +179,28 @@ def health() -> dict:
 
 
 @app.get("/api/games", response_model=GamesResponse)
-def games(include_completed: bool = False) -> GamesResponse:
+def games(competition: Literal["epl", "wc"] = "epl",
+          include_completed: bool = False) -> GamesResponse:
     conn = get_connection()
-    where = "" if include_completed else "WHERE completed = 0 AND date >= date('now')"
-    rows = [dict(r) for r in conn.execute(f"SELECT * FROM matches {where} ORDER BY kickoff_ts, match_id")]
+    upcoming = "" if include_completed else "AND completed = 0 AND date >= date('now')"
+    rows = [dict(r) for r in conn.execute(
+        f"SELECT * FROM matches WHERE competition = ? {upcoming} ORDER BY kickoff_ts, match_id",
+        (competition,),
+    )]
     preds = _predictions(conn, [r["match_id"] for r in rows])
     summaries = [board.build_game_summary(r, preds.get(r["match_id"])) for r in rows]
     dates = [s.date for s in summaries]
     return GamesResponse(
         from_date=min(dates, default=""), to_date=max(dates, default=""),
-        games=summaries, model_name="zuba_ensemble", model_version=MODEL_VERSION,
+        games=summaries, model_name="zuba", model_version=MODEL_VERSION,
+    )
+
+
+@app.get("/api/performance", response_model=PerformanceResponse)
+def model_performance() -> PerformanceResponse:
+    return PerformanceResponse(
+        backtest=performance.backtest_report(),
+        season=performance.season_record(get_connection()),
     )
 
 

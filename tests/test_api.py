@@ -1,4 +1,5 @@
 import json
+import math
 
 import pytest
 from fastapi.testclient import TestClient
@@ -37,6 +38,10 @@ def client(tmp_path, monkeypatch):
         "INSERT INTO matches (match_id, date, kickoff_ts, home_team, away_team) "
         "VALUES (1, '2999-01-01', '2999-01-01T18:00:00+00:00', 'Spain', 'Japan')"
     )
+    conn.execute(
+        "INSERT INTO matches (match_id, competition, date, kickoff_ts, home_team, away_team) "
+        "VALUES (2, 'epl', '2999-01-02', '2999-01-02T15:00:00+00:00', 'Arsenal', 'Chelsea')"
+    )
     probs = {"home_win_p": 0.6, "draw_p": 0.25, "away_win_p": 0.15, "over_2_5_p": 0.5}
     conn.execute(
         "INSERT INTO predictions VALUES (1, '2026-01-01', 'test', ?)", (json.dumps(probs),)
@@ -46,11 +51,42 @@ def client(tmp_path, monkeypatch):
 
 
 def test_games_and_board(client):
-    games = client.get("/api/games").json()["games"]
+    games = client.get("/api/games", params={"competition": "wc"}).json()["games"]
     assert [g["pick_label"] for g in games] == ["Spain"]
     board = client.get("/api/board/1").json()
+    assert board["competition"] == "wc"
     assert len(board["prices"]) == 5  # 3 results + over/under 2.5
     assert client.get("/api/board/99").status_code == 404
+
+
+def test_games_default_to_the_premier_league(client):
+    games = client.get("/api/games").json()["games"]
+    assert [(g["home_team"], g["competition"], g["has_prediction"]) for g in games] == [
+        ("Arsenal", "epl", False)]
+    assert client.get("/api/games", params={"competition": "nba"}).status_code == 422
+
+
+def test_season_record_pairs_results_with_earlier_predictions(tmp_path, monkeypatch):
+    from zuba.api import performance
+    from zuba.db import get_connection
+
+    monkeypatch.setattr(performance, "PREDICTIONS_CSV", tmp_path / "none.csv")
+    conn = get_connection(tmp_path / "season.db")
+    conn.executemany(
+        "INSERT INTO matches (match_id, competition, date, home_team, away_team, home_score, "
+        "away_score, completed) VALUES (?, 'epl', ?, ?, ?, ?, ?, ?)",
+        [(1, "2026-09-01", "Arsenal", "Chelsea", 2, 0, 1),
+         (2, "2026-09-08", "Leeds", "Everton", 1, 1, 1),
+         (3, "2026-09-15", "Fulham", "Hull", None, None, 0),
+         (4, "2025-09-01", "Arsenal", "Chelsea", 0, 3, 1)],      # last season
+    )
+    probs = json.dumps({"home_win_p": 0.5, "draw_p": 0.3, "away_win_p": 0.2})
+    conn.executemany("INSERT INTO predictions VALUES (?, '2026-01-01', 'test', ?)",
+                     [(i, probs) for i in (1, 2, 3, 4)])
+    record = performance.season_record(conn, "2026-27")
+    assert (record["matches"], record["correct"]) == (2, 1)
+    assert record["log_loss"] == pytest.approx(-(math.log(0.5) + math.log(0.3)) / 2)
+    assert record["games"][0]["home_team"] == "Leeds"            # newest first
 
 
 def test_lineups_before_they_are_published(client):
