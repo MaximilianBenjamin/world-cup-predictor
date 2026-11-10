@@ -35,7 +35,7 @@ export default function TablePage() {
       )}
 
       {data && (
-        <div className="grid lg:grid-cols-2 gap-x-8 gap-y-12 items-start">
+        <div className="grid lg:grid-cols-2 gap-x-10 xl:gap-x-16 gap-y-12 items-start">
           <Current data={data} />
           <Predicted data={data} />
         </div>
@@ -112,7 +112,7 @@ function Predicted({ data }: { data: TableResponse }) {
         {data.simulations.toLocaleString("en-GB")} times. Points and goals are averages.
       </SectionHead>
       <div className="overflow-x-auto">
-        <table className="w-full text-left min-w-[760px]">
+        <table className="w-full text-left min-w-[700px]">
           <thead>
             <tr className="label text-dust border-b border-line">
               <ClubHead />

@@ -38,7 +38,12 @@ export default function App() {
         <Ticker />
       </header>
 
-      <main className="flex-1 w-full max-w-5xl mx-auto px-4 sm:px-6 py-8">
+      {/* The table page holds two tables side by side, so it gets the full width. */}
+      <main
+        className={`flex-1 w-full mx-auto px-4 sm:px-6 py-8 ${
+          location.pathname === "/table" ? "max-w-[1600px]" : "max-w-5xl"
+        }`}
+      >
         <div key={location.pathname} className="animate-rise">
           <Outlet />
         </div>
