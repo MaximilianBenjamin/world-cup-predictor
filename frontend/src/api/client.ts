@@ -2,9 +2,11 @@ import axios from "axios";
 import type {
   CombineLeg,
   CombineResponse,
+  Competition,
   GamesResponse,
   LineupResponse,
   MatchBoardResponse,
+  PerformanceResponse,
 } from "./types";
 
 // In development Vite proxies /api to the backend on port 8001 (vite.config.ts).
@@ -15,10 +17,17 @@ const baseURL = import.meta.env.VITE_API_BASE_URL
 
 const api = axios.create({ baseURL, timeout: 30_000 });
 
-export async function getGames(includeCompleted = false): Promise<GamesResponse> {
+export async function getGames(
+  competition: Competition = "epl", includeCompleted = false,
+): Promise<GamesResponse> {
   const r = await api.get<GamesResponse>("/games", {
-    params: { include_completed: includeCompleted },
+    params: { competition, include_completed: includeCompleted },
   });
+  return r.data;
+}
+
+export async function getPerformance(): Promise<PerformanceResponse> {
+  const r = await api.get<PerformanceResponse>("/performance");
   return r.data;
 }
 

@@ -1,188 +1,169 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { getBoard } from "../api/client";
 import { useCart, legKey, type CartLeg } from "../cart/useCart";
-import type { MatchBoardResponse, SelectionPrice } from "../api/types";
-import { TeamBadge, shortDate, pct, sastTime, shortTeam } from "../lib/ui";
-import { Spotlight, useCountUp, useMagnetic } from "../lib/fx";
+import type { Competition, MatchBoardResponse, SelectionPrice } from "../api/types";
+import { COMPETITION_NAME, shortDate, pct, sastTime, teamName } from "../lib/ui";
+import TeamBadge from "../components/TeamBadge";
 import Pitch from "./Pitch";
 
 export default function MatchPage() {
   const { matchId } = useParams();
-  const navigate = useNavigate();
   const id = Number(matchId);
-  const backRef = useMagnetic<HTMLButtonElement>(0.3);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["board", id],
     queryFn: () => getBoard(id),
     enabled: Number.isFinite(id),
-    refetchInterval: 60_000, // auto-pick up re-pricing
+    refetchInterval: 60_000,
     refetchOnWindowFocus: true,
   });
 
-  if (isLoading) return <p className="text-muted text-sm py-16 text-center animate-pulse">Loading match…</p>;
+  if (isLoading) return <p className="label text-dust py-16 text-center">Loading match</p>;
   if (error || !data) {
     return (
-      <div className="rounded-2xl border border-bad/40 bg-bad/10 p-6 text-center">
-        <p className="text-bad font-semibold">Failed to load match</p>
-        <p className="text-muted text-sm mt-1">{String(error)}</p>
-        <Link to="/" className="text-accent text-sm mt-3 inline-block">← back to games</Link>
+      <div className="panel p-6">
+        <p className="font-semibold">Could not load this match.</p>
+        {error && <p className="text-dust text-sm mt-1">{String(error)}</p>}
+        <Link to="/" className="label text-red-hot mt-4 inline-block">← Fixtures</Link>
       </div>
     );
   }
 
+  const c = data.competition;
   const prob = (sel: string) =>
     data.prices.find((p) => p.market === "1x2" && p.selection === sel)?.model_p ?? null;
   const ph = prob("home");
   const pd = prob("draw");
   const pa = prob("away");
+  const played = data.completed && data.home_score != null && data.away_score != null;
 
   const resultPrices = data.prices.filter((p) => p.market === "1x2");
   const dcPrices = data.prices.filter((p) => p.market === "dc");
   const ouPrices = data.prices.filter((p) => p.market.startsWith("ou_"));
 
   return (
-    <div className="animate-fade-up">
-      <button
-        ref={backRef}
-        onClick={() => navigate(-1)}
-        className="magnetic group inline-flex items-center gap-2 rounded-full border border-glass-border bg-glass hover:bg-glass-hover hover:border-glass-border-strong pl-2.5 pr-4 py-1.5 text-sm text-muted hover:text-white transition mb-3"
+    <div>
+      <Link
+        to={c === "wc" ? "/world-cup" : "/"}
+        className="label text-dust hover:text-chalk inline-block mb-4"
       >
-        <span className="grid place-items-center w-5 h-5 rounded-full bg-white/10 group-hover:bg-accent/20 group-hover:text-accent group-hover:-translate-x-0.5 transition text-xs">←</span>
-        All games
-      </button>
+        ← {COMPETITION_NAME[c]} fixtures
+      </Link>
 
-      {/* Hero */}
-      <Spotlight tilt tiltMax={3} className="rounded-3xl border border-glass-border bg-glass-strong p-5 sm:p-6 overflow-hidden shadow-glow">
-        <div className="relative">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-dim text-center mb-4">
-            {shortDate(data.date)}
-            {data.kickoff_ts && <> · {sastTime(data.kickoff_ts)} SAST</>} · World Cup
-          </div>
-          <div className="flex items-center justify-between gap-3">
-            <TeamSide team={data.home_team} accent="home" />
-            <div className="shrink-0 text-center px-2">
-              <div className="text-dim text-xs font-semibold mb-1">VS</div>
-              {data.exp_home_goals != null && data.exp_away_goals != null && (
-                <div className="num text-[11px] text-muted whitespace-nowrap">
-                  xG {data.exp_home_goals.toFixed(2)}–{data.exp_away_goals.toFixed(2)}
-                </div>
-              )}
-            </div>
-            <TeamSide team={data.away_team} accent="away" reverse />
-          </div>
+      <section className="panel p-5 sm:p-8">
+        <p className="label text-dust text-center mb-6">
+          {COMPETITION_NAME[c]} · {shortDate(data.kickoff_ts ?? data.date)}
+          {data.kickoff_ts && <> · {sastTime(data.kickoff_ts)} SAST</>}
+        </p>
 
-          {ph != null && pd != null && pa != null && (
-            <WinProbBar home={ph} draw={pd} away={pa} homeTeam={data.home_team} awayTeam={data.away_team} />
-          )}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3 sm:gap-6">
+          <TeamSide team={data.home_team} competition={c} side="Home" />
+          <div className="text-center pt-3 sm:pt-5">
+            {played ? (
+              <div className="headline text-5xl sm:text-7xl whitespace-nowrap">
+                {data.home_score}<span className="text-red">–</span>{data.away_score}
+              </div>
+            ) : (
+              <div className="headline text-3xl sm:text-5xl text-red">v</div>
+            )}
+          </div>
+          <TeamSide team={data.away_team} competition={c} side="Away" />
         </div>
-      </Spotlight>
 
-      {/* Lineups pitch — md+ only (hidden on phones) */}
-      <Pitch matchId={data.match_id} />
+        {ph != null && pd != null && pa != null && (
+          <ResultBar
+            home={ph} draw={pd} away={pa}
+            homeTeam={teamName(data.home_team, c)} awayTeam={teamName(data.away_team, c)}
+          />
+        )}
+
+        {data.exp_home_goals != null && data.exp_away_goals != null && (
+          <p className="num text-center text-dust mt-5">
+            Expected goals{" "}
+            <span className="text-chalk font-bold">
+              {data.exp_home_goals.toFixed(2)} – {data.exp_away_goals.toFixed(2)}
+            </span>
+          </p>
+        )}
+      </section>
+
+      <Pitch matchId={data.match_id} competition={c} />
 
       {data.prices.length === 0 ? (
-        <p className="text-muted text-sm py-12 text-center">No model prediction for this game yet.</p>
+        <p className="panel p-8 text-dust mt-6">The model has not priced this match yet.</p>
       ) : (
-        <div className="mt-5 space-y-5">
+        <div className="mt-6 space-y-6">
           {resultPrices.length > 0 && (
-            <MarketSection title="Match result" prices={resultPrices} board={data} cols={3} />
+            <MarketSection title="Match result" prices={resultPrices} board={data} />
           )}
           {dcPrices.length > 0 && (
-            <MarketSection title="Double chance" prices={dcPrices} board={data} cols={3} />
+            <MarketSection title="Double chance" prices={dcPrices} board={data} />
           )}
           {ouPrices.length > 0 && <OverUnderSection prices={ouPrices} board={data} />}
         </div>
       )}
 
-      <p className="text-[11px] text-muted mt-6 leading-relaxed">
-        <b className="text-dim">Fair odds</b> = 1 ÷ the model's probability. These are our models' own
-        numbers — no bookmaker odds. Tick any picks to combine them in the slip below.
+      <p className="text-sm text-dust mt-6 max-w-2xl">
+        The large number is the fair price: 1 divided by the model's probability, shown beside it.
+        Select two or more prices to see what they come to combined.
       </p>
     </div>
   );
 }
 
-function TeamSide({ team, accent, reverse }: { team: string; accent: "home" | "away"; reverse?: boolean }) {
+function TeamSide({
+  team, competition, side,
+}: { team: string; competition: Competition; side: string }) {
   return (
-    <div className={`flex-1 min-w-0 flex flex-col items-center gap-2 ${reverse ? "" : ""}`}>
-      <div
-        className={`rounded-2xl p-0.5 transition-transform duration-300 hover:scale-105 ${
-          accent === "home" ? "bg-home/20 shadow-[0_0_28px_-8px_#50a5b1]" : "bg-away/20 shadow-[0_0_28px_-8px_#f1600d]"
-        }`}
-      >
-        <TeamBadge team={team} size={52} />
-      </div>
-      <div className="font-bold text-center leading-tight text-sm sm:text-base break-words max-w-full">
-        {shortTeam(team)}
+    <div className="flex flex-col items-center gap-3 min-w-0 text-center">
+      <TeamBadge team={team} competition={competition} size={64} />
+      <div className="min-w-0 max-w-full">
+        <div className="headline text-2xl sm:text-4xl break-words">{teamName(team, competition)}</div>
+        <div className="label text-dust mt-1.5">{side}</div>
       </div>
     </div>
   );
 }
 
-function WinProbBar({
+/** One bar split three ways: home, draw, away. */
+function ResultBar({
   home, draw, away, homeTeam, awayTeam,
 }: { home: number; draw: number; away: number; homeTeam: string; awayTeam: string }) {
   const total = home + draw + away || 1;
-  const h = (home / total) * 100;
-  const d = (draw / total) * 100;
-  const a = (away / total) * 100;
-
-  // spring-fill from the centre outward on mount
-  const [filled, setFilled] = useState(false);
-  useEffect(() => {
-    const t = requestAnimationFrame(() => setFilled(true));
-    return () => cancelAnimationFrame(t);
-  }, []);
-
-  const ch = useCountUp(home, filled);
-  const cd = useCountUp(draw, filled);
-  const ca = useCountUp(away, filled);
-  const ease = "cubic-bezier(0.16,1,0.3,1)";
-
+  const parts = [
+    { label: homeTeam, p: home, bar: "bg-red", align: "text-left" },
+    { label: "Draw", p: draw, bar: "bg-dust/60", align: "text-center" },
+    { label: awayTeam, p: away, bar: "bg-chalk", align: "text-right" },
+  ];
   return (
-    <div className="mt-5">
-      <div className="flex h-3 rounded-full overflow-hidden ring-1 ring-white/10 bg-white/5">
-        <div
-          className="bg-home transition-[width] duration-700"
-          style={{ width: filled ? `${h}%` : "0%", transitionTimingFunction: ease }}
-        />
-        <div
-          className="bg-white/25 transition-[width] duration-700"
-          style={{ width: filled ? `${d}%` : "0%", transitionTimingFunction: ease, transitionDelay: "60ms" }}
-        />
-        <div
-          className="bg-away transition-[width] duration-700"
-          style={{ width: filled ? `${a}%` : "0%", transitionTimingFunction: ease, transitionDelay: "120ms" }}
-        />
+    <div className="mt-8">
+      <div className="flex h-3 gap-0.5" role="img"
+           aria-label={`${homeTeam} ${pct(home)}, draw ${pct(draw)}, ${awayTeam} ${pct(away)}`}>
+        {parts.map((s) => (
+          <div key={s.label} className={s.bar} style={{ width: `${(s.p / total) * 100}%` }} />
+        ))}
       </div>
-      <div className="flex justify-between items-baseline gap-2 mt-2 text-[11px]">
-        <span className="flex items-baseline gap-1 min-w-0 flex-1">
-          <span className="text-home font-semibold truncate">{shortTeam(homeTeam)}</span>
-          <span className="num text-home shrink-0">{pct(ch)}</span>
-        </span>
-        <span className="text-muted num shrink-0">Draw {pct(cd)}</span>
-        <span className="flex items-baseline justify-end gap-1 min-w-0 flex-1">
-          <span className="text-away font-semibold truncate">{shortTeam(awayTeam)}</span>
-          <span className="num text-away shrink-0">{pct(ca)}</span>
-        </span>
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        {parts.map((s) => (
+          <div key={s.label} className={`min-w-0 ${s.align}`}>
+            <div className="num text-2xl font-bold leading-tight">{pct(s.p)}</div>
+            <div className="label text-dust truncate">{s.label}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
 }
 
 function MarketSection({
-  title, prices, board, cols,
-}: { title: string; prices: SelectionPrice[]; board: MatchBoardResponse; cols: number }) {
+  title, prices, board,
+}: { title: string; prices: SelectionPrice[]; board: MatchBoardResponse }) {
   return (
-    <section className="rounded-2xl border border-glass-border bg-glass p-4">
-      <h2 className="text-[11px] uppercase tracking-[0.16em] text-dim mb-3">{title}</h2>
-      <div
-        className="grid gap-2"
-        style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
-      >
+    <section>
+      <h2 className="label text-chalk text-sm border-b border-line pb-2 mb-3">{title}</h2>
+      <div className="grid grid-cols-3 gap-2">
         {prices.map((p) => (
           <PriceButton key={`${p.market}:${p.selection}`} price={p} board={board} />
         ))}
@@ -191,26 +172,24 @@ function MarketSection({
   );
 }
 
-/** Total goals laid out as two columns — every Over on the left, every Under on
- *  the right, lines aligned row-by-row (not jumbled). */
+/** Total goals in two columns, over on the left and under on the right, one
+ *  row per line. */
 function OverUnderSection({ prices, board }: { prices: SelectionPrice[]; board: MatchBoardResponse }) {
   const lines = [...new Set(prices.map((p) => p.market))].sort();
   return (
-    <section className="rounded-2xl border border-glass-border bg-glass p-4">
-      <h2 className="text-[11px] uppercase tracking-[0.16em] text-dim mb-3">Total goals — over / under</h2>
-      <div className="grid grid-cols-[1fr_2.5rem_1fr] gap-x-2 gap-y-2 items-center">
-        <div className="text-center text-[10px] uppercase tracking-wider text-pick font-semibold">Over</div>
-        <div />
-        <div className="text-center text-[10px] uppercase tracking-wider text-amber font-semibold">Under</div>
+    <section>
+      <h2 className="label text-chalk text-sm border-b border-line pb-2 mb-3">Total goals</h2>
+      <div className="grid grid-cols-[1fr_3rem_1fr] gap-2 items-center">
         {lines.map((mkt) => {
           const over = prices.find((p) => p.market === mkt && p.selection === "over");
           const under = prices.find((p) => p.market === mkt && p.selection === "under");
-          const line = mkt.slice(3).replace("_", ".");
           return (
             <Fragment key={mkt}>
-              {over ? <PriceButton price={over} board={board} compact /> : <div />}
-              <div className="num text-center text-sm font-bold text-dim">{line}</div>
-              {under ? <PriceButton price={under} board={board} compact /> : <div />}
+              {over ? <PriceButton price={over} board={board} label="Over" /> : <div />}
+              <div className="num text-center text-xl font-bold text-dust">
+                {mkt.slice(3).replace("_", ".")}
+              </div>
+              {under ? <PriceButton price={under} board={board} label="Under" /> : <div />}
             </Fragment>
           );
         })}
@@ -220,17 +199,17 @@ function OverUnderSection({ prices, board }: { prices: SelectionPrice[]; board: 
 }
 
 function PriceButton({
-  price, board, compact,
-}: { price: SelectionPrice; board: MatchBoardResponse; compact?: boolean }) {
+  price, board, label,
+}: { price: SelectionPrice; board: MatchBoardResponse; label?: string }) {
   const { has, toggle } = useCart();
   const key = legKey(board.match_id, price.market, price.selection);
   const selected = has(key);
-  const odds = useCountUp(price.fair_odds, true, 650);
+  const c = board.competition;
 
   const leg: CartLeg = {
     key,
     matchId: board.match_id,
-    matchLabel: `${board.home_team} vs ${board.away_team}`,
+    matchLabel: `${teamName(board.home_team, c)} v ${teamName(board.away_team, c)}`,
     market: price.market,
     selection: price.selection,
     selectionLabel: price.selection_label,
@@ -239,33 +218,24 @@ function PriceButton({
   };
 
   return (
-    <Spotlight
-      as="button"
+    <button
       onClick={() => toggle(leg)}
-      className={`group flex flex-col items-start rounded-xl border px-3 py-2.5 text-left transition-[transform,background-color,border-color] duration-150 active:scale-[0.97] ${
+      aria-pressed={selected}
+      className={`text-left px-3 py-2.5 border transition-colors min-w-0 ${
         selected
-          ? "border-pick/50 bg-pick/15 shadow-pick"
-          : "border-glass-border bg-glass-strong hover:bg-glass-hover hover:border-glass-border-strong"
+          ? "border-gold bg-gold text-ink"
+          : "border-line bg-slab hover:border-dust"
       }`}
     >
-      <div className="flex items-center justify-between w-full">
-        <span className="text-xs font-medium truncate pr-1">
-          {compact ? (price.selection === "over" ? "Over" : "Under") : price.selection_label}
-        </span>
-        <span
-          className={`shrink-0 grid place-items-center w-4 h-4 rounded-full text-[10px] transition ${
-            selected ? "bg-pick text-black scale-100" : "bg-white/5 text-transparent group-hover:text-dim"
-          }`}
-        >
-          ✓
+      <div className={`label truncate ${selected ? "text-ink" : "text-dust"}`}>
+        {label ?? price.selection_label}
+      </div>
+      <div className="flex items-baseline justify-between gap-2 mt-1">
+        <span className="num text-2xl font-bold leading-none">{price.fair_odds.toFixed(2)}</span>
+        <span className={`num text-sm ${selected ? "text-ink" : "text-dust"}`}>
+          {pct(price.model_p, 1)}
         </span>
       </div>
-      <div className="flex items-baseline justify-between w-full mt-1.5">
-        <span className={`num text-lg font-extrabold tabular-nums ${selected ? "text-pick" : ""}`}>
-          {odds.toFixed(2)}
-        </span>
-        <span className="num text-[11px] text-muted">{pct(price.model_p, 1)}</span>
-      </div>
-    </Spotlight>
+    </button>
   );
 }

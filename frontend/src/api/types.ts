@@ -9,8 +9,11 @@ export interface SelectionPrice {
   fair_odds: number;
 }
 
+export type Competition = "epl" | "wc";
+
 export interface GameSummary {
   match_id: number;
+  competition: Competition;
   date: string;
   kickoff_ts: string | null;
   home_team: string;
@@ -19,6 +22,9 @@ export interface GameSummary {
   home_score: number | null;
   away_score: number | null;
   has_prediction: boolean;
+  p_home: number | null;
+  p_draw: number | null;
+  p_away: number | null;
   pick_selection: string | null;
   pick_label: string | null;
   pick_p: number | null;
@@ -35,6 +41,7 @@ export interface GamesResponse {
 
 export interface MatchBoardResponse {
   match_id: number;
+  competition: Competition;
   date: string;
   kickoff_ts: string | null;
   home_team: string;
@@ -94,4 +101,58 @@ export interface CombineResponse {
   combined_fair_odds: number;
   correlated_warning: boolean;
   note: string;
+}
+
+// ---- model performance ----
+
+export interface Interval { value: number; low: number; high: number }
+
+export interface ModelScore {
+  log_loss: Interval;
+  brier: Interval;
+  rps: Interval;
+  accuracy: Interval;
+  ece: { value: number };
+}
+
+export interface CalibrationBin { stated: number; observed: number; count: number }
+
+/** docs/backtest_epl.json. Keys of the score maps are model ids
+ *  ("dixon_coles", "blend", "market", "baseline", ...). */
+export interface BacktestReport {
+  seasons: [string, string];
+  matches: number;
+  result: Record<string, ModelScore>;
+  goals: Record<string, ModelScore>;
+  result_vs_market: Record<string, Interval>;
+  goals_vs_market: Record<string, Interval>;
+  calibration: { blend: CalibrationBin[]; market: CalibrationBin[] };
+  by_season: { season: string; matches: number; blend: number; market: number }[];
+  weights: { result: Record<string, number>; goals: Record<string, number> };
+}
+
+export interface SeasonGame {
+  date: string;
+  home_team: string;
+  away_team: string;
+  home_score: number;
+  away_score: number;
+  p_home: number;
+  p_draw: number;
+  p_away: number;
+  p_result: number;
+  correct: boolean;
+}
+
+export interface SeasonRecord {
+  season: string;
+  matches: number;
+  correct: number;
+  log_loss: number | null;
+  games: SeasonGame[];
+}
+
+export interface PerformanceResponse {
+  backtest: BacktestReport | null;
+  season: SeasonRecord;
 }

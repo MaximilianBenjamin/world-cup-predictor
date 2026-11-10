@@ -4,40 +4,20 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#101740" />
-    <title>zuba · World Cup model picks</title>
-
-    <!-- Fonts loaded non-render-blocking with swap, so text paints immediately. -->
+    <meta name="theme-color" content="#0a0a0b" />
+    <title>zuba · Premier League fair odds</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
-      media="print"
-      onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap"
     />
-
-    <!-- Instant paint: navy canvas + branded loader shown before the JS bundle
-         boots, so a fresh load / reload never flashes an empty screen. React
-         replaces #root on mount. -->
     <style>
-      html, body { margin: 0; background: #0e1436; }
-      #boot {
-        position: fixed; inset: 0; display: grid; place-items: center;
-        background: radial-gradient(ellipse 120% 90% at 50% -10%, #2a3a7a 0%, #17235a 45%, #0e1436 100%);
-      }
-      #boot .wm {
-        font-family: "Inter", system-ui, sans-serif; font-weight: 900;
-        font-size: 2rem; letter-spacing: -0.03em;
-        background: linear-gradient(100deg, #fef6ed, #f4915a 50%, #f1600d);
-        -webkit-background-clip: text; background-clip: text; color: transparent;
-        animation: bootpulse 1.1s ease-in-out infinite;
-      }
-      @keyframes bootpulse { 0%,100% { opacity: .45 } 50% { opacity: 1 } }
+      html, body { margin: 0; background: #0a0a0b; }
     </style>
   </head>
   <body>
-    <div id="root"><div id="boot"><span class="wm">zuba</span></div></div>
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

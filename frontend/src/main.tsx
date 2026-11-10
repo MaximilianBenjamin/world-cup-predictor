@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import App from "./App";
 import SlatePage from "./pages/SlatePage";
 import MatchPage from "./pages/MatchPage";
+import PerformancePage from "./pages/PerformancePage";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -19,13 +20,15 @@ const queryClient = new QueryClient({
 
 // react-router v7 data router (createBrowserRouter + RouterProvider). The
 // declarative <BrowserRouter><Routes> form failed to re-render on client-side
-// navigation with React 19.2 — this is the supported v7 pattern.
+// navigation with React 19.2; this is the supported v7 pattern.
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
-      { index: true, element: <SlatePage /> },
+      { index: true, element: <SlatePage competition="epl" /> },
+      { path: "world-cup", element: <SlatePage competition="wc" /> },
+      { path: "record", element: <PerformancePage /> },
       { path: "match/:matchId", element: <MatchPage /> },
     ],
   },

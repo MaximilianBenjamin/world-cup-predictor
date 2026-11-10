@@ -1,13 +1,11 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getLineups } from "../api/client";
-import type { LineupPlayer, LineupSide } from "../api/types";
-import { flag } from "../lib/flags";
-import { sastTime, sastMoment, shortTeam } from "../lib/ui";
+import type { Competition, LineupPlayer, LineupSide } from "../api/types";
+import { sastTime, sastMoment, teamName } from "../lib/ui";
 
-/** True on tablet/desktop (≥768px). Drives whether we even mount the pitch —
- *  on phones we render nothing AND skip the lineups request, so the smaller
- *  screen does zero extra work. */
+/** True on tablet and desktop (768px and wider). On phones the pitch is not
+ *  rendered and the lineups request is skipped. */
 function useIsDesktop(): boolean {
   const q = "(min-width: 768px)";
   const [isDesktop, setIsDesktop] = useState(
@@ -22,9 +20,12 @@ function useIsDesktop(): boolean {
   return isDesktop;
 }
 
-/** Football pitch with both confirmed XIs. Desktop/tablet only. Lineups publish
- *  ~1h before kickoff; until then we show a placeholder with the SAST time. */
-export default function Pitch({ matchId }: { matchId: number }) {
+/** Football pitch with both confirmed starting XIs. Tablet and desktop only.
+ *  Lineups are published about an hour before kickoff; until then a note says
+ *  when to check back. */
+export default function Pitch({
+  matchId, competition,
+}: { matchId: number; competition: Competition }) {
   const isDesktop = useIsDesktop();
 
   const { data } = useQuery({
@@ -38,18 +39,14 @@ export default function Pitch({ matchId }: { matchId: number }) {
   if (!isDesktop || !data) return null;
 
   return (
-    <section className="mt-5">
-      <div className="flex items-center justify-between mb-2.5">
-        <h2 className="text-[11px] uppercase tracking-[0.16em] text-dim">Starting lineups</h2>
-        {data.available && (
-          <span className="text-[11px] text-pick flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-pick" /> confirmed XI
-          </span>
-        )}
+    <section className="mt-6">
+      <div className="flex items-end justify-between border-b border-line pb-2 mb-3">
+        <h2 className="label text-chalk text-sm">Starting lineups</h2>
+        {data.available && <span className="label text-gold">Confirmed</span>}
       </div>
 
       {data.available && data.home && data.away ? (
-        <PitchBoard home={data.home} away={data.away} />
+        <PitchBoard home={data.home} away={data.away} competition={competition} />
       ) : (
         <LineupPlaceholder kickoff={data.kickoff_ts} />
       )}
@@ -61,24 +58,22 @@ function LineupPlaceholder({ kickoff }: { kickoff: string | null }) {
   const drop = sastMoment(kickoff, -60); // ESPN publishes XIs ~1h before KO
   const ko = sastTime(kickoff);
   return (
-    <div className="rounded-2xl border border-glass-border bg-glass p-8 text-center">
-      <div className="text-3xl mb-2">📋</div>
-      <p className="text-sm text-muted">
-        Confirmed lineups drop about an hour before kickoff
+    <div className="border border-line bg-coal p-6 text-dust">
+      <p>
+        Lineups are published about an hour before kickoff
         {drop && (
-          <> — check back around <span className="text-cream font-medium">{drop} SAST</span></>
+          <>. Check back around <span className="num text-chalk font-semibold">{drop} SAST</span></>
         )}
         .
       </p>
-      {ko && <p className="text-[11px] text-dim mt-1">Kickoff {ko} SAST</p>}
+      {ko && <p className="num text-sm mt-1">Kickoff {ko} SAST</p>}
     </div>
   );
 }
 
-// ---- role-based placement -------------------------------------------------
-// ESPN's roster order is NOT row-order, so place each starter by its position
-// abbreviation ("CD-L", "LB", "DM", "CM-R", "LF" …): a depth tier (how far up
-// the pitch) and a lateral offset (left↔right).
+// ESPN lists players in roster order, not by row, so each starter is placed by
+// its position code ("CD-L", "LB", "DM", "CM-R", "LF"): how far up the pitch,
+// and how far left or right.
 
 function roleOf(pos: string | null): { depth: number; lateral: number } {
   if (!pos) return { depth: 3, lateral: 0 };
@@ -126,7 +121,9 @@ function placements(lineup: LineupSide, side: "home" | "away") {
   return spots;
 }
 
-function PitchBoard({ home, away }: { home: LineupSide; away: LineupSide }) {
+function PitchBoard({
+  home, away, competition,
+}: { home: LineupSide; away: LineupSide; competition: Competition }) {
   const spots = [
     ...placements(home, "home").map((s) => ({ ...s, side: "home" as const })),
     ...placements(away, "away").map((s) => ({ ...s, side: "away" as const })),
@@ -134,24 +131,24 @@ function PitchBoard({ home, away }: { home: LineupSide; away: LineupSide }) {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-2 text-sm">
+      <div className="flex items-center justify-between mb-2">
         <span className="flex items-center gap-2 font-semibold min-w-0">
-          <span className="w-2.5 h-2.5 rounded-full bg-home shrink-0" />
-          <span className="truncate">{flag(home.team)} {shortTeam(home.team)}</span>
-          {home.formation && <span className="text-dim text-xs num shrink-0">· {home.formation}</span>}
+          <span className="w-3 h-3 bg-red shrink-0" />
+          <span className="truncate">{teamName(home.team, competition)}</span>
+          {home.formation && <span className="num text-dust shrink-0">{home.formation}</span>}
         </span>
         <span className="flex items-center gap-2 font-semibold min-w-0 justify-end">
-          {away.formation && <span className="text-dim text-xs num shrink-0">{away.formation} ·</span>}
-          <span className="truncate">{shortTeam(away.team)} {flag(away.team)}</span>
-          <span className="w-2.5 h-2.5 rounded-full bg-away shrink-0" />
+          {away.formation && <span className="num text-dust shrink-0">{away.formation}</span>}
+          <span className="truncate">{teamName(away.team, competition)}</span>
+          <span className="w-3 h-3 bg-chalk shrink-0" />
         </span>
       </div>
 
       <div
-        className="relative w-full rounded-2xl overflow-hidden ring-1 ring-white/10"
+        className="relative w-full overflow-hidden border border-line"
         style={{
           aspectRatio: "16 / 9",
-          background: "repeating-linear-gradient(90deg, #15803d 0 8%, #166b36 8% 16%)",
+          background: "repeating-linear-gradient(90deg, #0f5a2c 0 8%, #0d4f27 8% 16%)",
         }}
       >
         <div className="absolute inset-0 pointer-events-none">
@@ -160,7 +157,6 @@ function PitchBoard({ home, away }: { home: LineupSide; away: LineupSide }) {
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white/30" />
           <div className="absolute top-1/2 -translate-y-1/2 left-0 h-[44%] w-[14%] border-y border-r border-white/25" />
           <div className="absolute top-1/2 -translate-y-1/2 right-0 h-[44%] w-[14%] border-y border-l border-white/25" />
-          <div className="absolute inset-0 border border-white/15 rounded-2xl" />
         </div>
 
         {spots.map(({ x, y, p, side }) => (
@@ -185,13 +181,13 @@ function PlayerChip({
       style={{ left: `${x}%`, top: `${y}%`, width: 64 }}
     >
       <div
-        className={`grid place-items-center w-7 h-7 rounded-full text-[11px] font-extrabold text-white shadow-lg ring-2 ring-white/70 ${
-          side === "home" ? "bg-home/90" : "bg-away/90"
+        className={`num grid place-items-center w-7 h-7 rounded-full text-sm font-bold ring-2 ring-ink ${
+          side === "home" ? "bg-red text-white" : "bg-chalk text-ink"
         }`}
       >
         {player.shirt ?? ""}
       </div>
-      <span className="num text-[10px] leading-tight text-center text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] truncate w-full">
+      <span className="num text-xs leading-tight text-center text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)] truncate w-full">
         {lastName(player.name)}
       </span>
     </div>
