@@ -5,6 +5,7 @@
 Endpoints (all read-only apart from /api/combine, which only does arithmetic):
     GET  /api/games            upcoming fixtures with the model's pick for each
                                (?competition=epl or wc)
+    GET  /api/table            the Premier League table now and the predicted final table
     GET  /api/performance      Premier League backtest scores and this season's record
     GET  /api/board/{id}       every market for one match, with fair odds
     GET  /api/lineups/{id}     starting XIs once ESPN publishes them
@@ -43,7 +44,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from zuba import espn, snapshot
+from zuba import espn, snapshot, table
 from zuba.api import board, performance
 from zuba.api.schemas import (
     CombineRequest,
@@ -71,6 +72,7 @@ def refresh() -> None:
         update_club_results()
         n_fixtures = espn.save_fixtures()
         n_priced = predict_upcoming()
+        table.write()
         log.info("refresh: %d fixtures updated, %d matches priced", n_fixtures, n_priced)
     except Exception:
         log.exception("refresh failed")
@@ -200,6 +202,15 @@ def games(competition: Literal["epl", "wc"] = "epl",
         from_date=min(dates, default=""), to_date=max(dates, default=""),
         games=summaries, model_name="zuba", model_version=MODEL_VERSION,
     )
+
+
+@app.get("/api/table")
+def league_table() -> dict:
+    """data/live/table.json, written by `zuba table` in the daily refresh."""
+    built = table.read()
+    if built is None:
+        raise HTTPException(404, "the table has not been built yet")
+    return built
 
 
 @app.get("/api/performance", response_model=PerformanceResponse)
