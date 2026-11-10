@@ -1,21 +1,24 @@
 """LightGBM on Elo and recent form: match result probabilities.
 
-Features for each match: both teams' pre-match Elo, the gap between them, and
-each side's average points over its last 3 and last 5 games. Both are computed
-before kickoff, so the model never sees the result it is predicting.
+Features for each match: both teams' pre-match Elo, the gap between them, each
+side's average points over its last 3 and last 5 games, and whether the venue
+is neutral. All are known before kickoff, so the model never sees the result
+it is predicting. The number of trees is set by early stopping (see
+`zuba.models.tabular`).
 """
 
 from __future__ import annotations
 
-import lightgbm as lgb
 import numpy as np
 import pandas as pd
+
+from zuba.models.tabular import ResultBooster
 
 FEATURES = [
     "elo_home", "elo_away", "elo_diff",
     "form3_home", "form5_home", "form3_away", "form5_away",
+    "neutral",
 ]
-_LABELS = {"H": 0, "D": 1, "A": 2}
 _POINTS_HOME = {"H": 3, "D": 1, "A": 0}
 _POINTS_AWAY = {"A": 3, "D": 1, "H": 0}
 
@@ -56,24 +59,13 @@ def recent_form(rated: pd.DataFrame) -> dict[str, list[int]]:
 
 
 class EloLGBM:
-    def __init__(self, n_estimators: int = 500, learning_rate: float = 0.05, num_leaves: int = 31):
-        self._model = lgb.LGBMClassifier(
-            n_estimators=n_estimators,
-            learning_rate=learning_rate,
-            num_leaves=num_leaves,
-            objective="multiclass",
-            random_state=42,
-            verbose=-1,
-        )
-        self._medians: pd.Series | None = None
+    def __init__(self) -> None:
+        self._model = ResultBooster("lightgbm", FEATURES)
         self._form: dict[str, list[int]] = {}
 
     def fit(self, rated: pd.DataFrame) -> EloLGBM:
-        """rated: output of build_international_elo (needs elo_* and result)."""
-        df = add_form(rated)
-        X = df[FEATURES]
-        self._medians = X.median()
-        self._model.fit(X.fillna(self._medians), df["result"].map(_LABELS))
+        """rated: output of build_international_elo (needs elo_*, neutral and result)."""
+        self._model.fit(add_form(rated))
         self._form = recent_form(rated)
         return self
 
@@ -81,11 +73,14 @@ class EloLGBM:
         pts = self._form.get(team)
         return float(np.mean(pts[-n:])) if pts else np.nan
 
-    def predict(self, home_team: str, away_team: str, elo_home: float, elo_away: float) -> np.ndarray:
-        """[P(home win), P(draw), P(away win)]. Missing form uses training medians."""
+    def predict(self, home_team: str, away_team: str, elo_home: float, elo_away: float,
+                neutral: bool = True) -> np.ndarray:
+        """[P(home win), P(draw), P(away win)]. A team with no earlier games has
+        missing form, which the trees handle directly."""
         row = pd.DataFrame([{
             "elo_home": elo_home, "elo_away": elo_away, "elo_diff": elo_home - elo_away,
             "form3_home": self._form_avg(home_team, 3), "form5_home": self._form_avg(home_team, 5),
             "form3_away": self._form_avg(away_team, 3), "form5_away": self._form_avg(away_team, 5),
-        }])[FEATURES]
-        return self._model.predict_proba(row.fillna(self._medians))[0]
+            "neutral": neutral,
+        }])
+        return self._model.predict(row)[0]
