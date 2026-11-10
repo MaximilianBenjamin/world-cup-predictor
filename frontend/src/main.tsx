@@ -7,6 +7,7 @@ import App from "./App";
 import SlatePage from "./pages/SlatePage";
 import MatchPage from "./pages/MatchPage";
 import PerformancePage from "./pages/PerformancePage";
+import TablePage from "./pages/TablePage";
 import "./index.css";
 
 const queryClient = new QueryClient({
@@ -27,6 +28,7 @@ const router = createBrowserRouter([
     element: <App />,
     children: [
       { index: true, element: <SlatePage competition="epl" /> },
+      { path: "table", element: <TablePage /> },
       { path: "world-cup", element: <SlatePage competition="wc" /> },
       { path: "record", element: <PerformancePage /> },
       { path: "match/:matchId", element: <MatchPage /> },

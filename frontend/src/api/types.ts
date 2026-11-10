@@ -156,3 +156,46 @@ export interface PerformanceResponse {
   backtest: BacktestReport | null;
   season: SeasonRecord;
 }
+
+// ---- league table ----
+
+export interface TableRow {
+  position: number;
+  team: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  goals_for: number;
+  goals_against: number;
+  goal_difference: number;
+  points: number;
+}
+
+/** Averages over the simulated seasons, so points and goals are decimals. */
+export interface PredictedRow {
+  position: number;
+  current_position: number;
+  team: string;
+  played: number;
+  points: number;
+  goals_for: number;
+  goals_against: number;
+  goal_difference: number;
+  average_position: number;
+  position_low: number;      // the middle 90% of simulations finish between
+  position_high: number;     // these two positions
+  p_title: number;
+  p_top4: number;
+  p_relegation: number;
+}
+
+export interface TableResponse {
+  season: string;
+  results_to: string;
+  matches_played: number;
+  matches_remaining: number;
+  simulations: number;
+  current: TableRow[];
+  predicted: PredictedRow[];
+}

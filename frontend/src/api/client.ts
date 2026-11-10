@@ -7,6 +7,7 @@ import type {
   LineupResponse,
   MatchBoardResponse,
   PerformanceResponse,
+  TableResponse,
 } from "./types";
 
 // In development Vite proxies /api to the backend on port 8001 (vite.config.ts).
@@ -43,5 +44,10 @@ export async function getLineups(matchId: number): Promise<LineupResponse> {
 
 export async function postCombine(legs: CombineLeg[]): Promise<CombineResponse> {
   const r = await api.post<CombineResponse>("/combine", { legs });
+  return r.data;
+}
+
+export async function getTable(): Promise<TableResponse> {
+  const r = await api.get<TableResponse>("/table");
   return r.data;
 }

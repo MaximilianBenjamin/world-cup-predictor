@@ -25,11 +25,12 @@ export default function App() {
           <Link to="/" className="headline text-3xl self-center pt-1" aria-label="zuba home">
             zuba<span className="text-red">.</span>
           </Link>
-          <div className="flex items-stretch gap-3 sm:gap-5">
+          <div className="flex items-stretch gap-2 sm:gap-5">
             <NavLink to="/" end className={tabClass}>
-              <span className="sm:hidden">League</span>
+              <span className="sm:hidden">Fixtures</span>
               <span className="hidden sm:inline">Premier League</span>
             </NavLink>
+            <NavLink to="/table" className={tabClass}>Table</NavLink>
             <NavLink to="/world-cup" className={tabClass}>World Cup</NavLink>
             <NavLink to="/record" className={tabClass}>Record</NavLink>
           </div>
