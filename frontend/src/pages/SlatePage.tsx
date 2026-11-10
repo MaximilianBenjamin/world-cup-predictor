@@ -71,9 +71,11 @@ export default function SlatePage({ competition }: { competition: Competition })
           <section key={grp.label}>
             <div className="flex items-end justify-between border-b border-line pb-2">
               <h2 className="label text-chalk text-sm">{grp.label}</h2>
-              <div className="label text-dust hidden sm:grid grid-cols-3 w-[264px] text-center">
+              {!archive && (
+                <div className="label text-dust hidden sm:grid grid-cols-3 w-[264px] text-center">
                 <span>Home</span><span>Draw</span><span>Away</span>
               </div>
+              )}
             </div>
             <ul>
               {grp.games.map((g) => (
@@ -113,8 +115,10 @@ function FixtureRow({ game }: { game: GameSummary }) {
             {played ? "FT" : sastTime(game.kickoff_ts)}
           </span>
           <div className="flex-1 min-w-0 space-y-1.5">
-            <TeamLine team={game.home_team} competition={c} score={played ? game.home_score : null} />
-            <TeamLine team={game.away_team} competition={c} score={played ? game.away_score : null} />
+            <TeamLine team={game.home_team} competition={c} side="Home"
+                      score={played ? game.home_score : null} />
+            <TeamLine team={game.away_team} competition={c} side="Away"
+                      score={played ? game.away_score : null} />
           </div>
         </div>
 
@@ -129,7 +133,7 @@ function FixtureRow({ game }: { game: GameSummary }) {
                     pick ? "border-gold bg-gold/10" : "border-line bg-slab"
                   }`}
                 >
-                  <div className="label text-dust sm:hidden">{label}</div>
+                  <div className="label text-dust">{label}</div>
                   <div className={`num text-xl font-bold leading-tight ${pick ? "text-gold" : ""}`}>
                     {p ? (1 / p).toFixed(2) : "–"}
                   </div>
@@ -148,15 +152,27 @@ function FixtureRow({ game }: { game: GameSummary }) {
   );
 }
 
+/** One club in a fixture. League games say which side is at home; World Cup
+ *  games are at neutral grounds, so they carry no tag. */
 function TeamLine({
-  team, competition, score,
-}: { team: string; competition: Competition; score: number | null }) {
+  team, competition, side, score,
+}: { team: string; competition: Competition; side: "Home" | "Away"; score: number | null }) {
   return (
     <div className="flex items-center gap-2.5 min-w-0">
       <TeamBadge team={team} competition={competition} size={26} />
-      <span className="font-semibold text-lg leading-none truncate flex-1">
+      <span className="font-semibold text-lg leading-none truncate">
         {teamName(team, competition)}
       </span>
+      {competition === "epl" && (
+        <span
+          className={`label shrink-0 px-1.5 py-0.5 border ${
+            side === "Home" ? "border-red text-red-hot" : "border-line text-dust"
+          }`}
+        >
+          {side}
+        </span>
+      )}
+      <span className="flex-1" />
       {score != null && <span className="num text-xl font-bold pr-2">{score}</span>}
     </div>
   );
