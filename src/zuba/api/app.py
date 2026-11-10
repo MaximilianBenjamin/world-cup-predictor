@@ -47,6 +47,7 @@ from zuba.api.schemas import (
     LineupSide,
     MatchBoardResponse,
 )
+from zuba.data.fetch import update_club_results
 from zuba.db import get_connection
 from zuba.markets import MODEL_VERSION, predict_upcoming
 
@@ -57,8 +58,9 @@ log = logging.getLogger("uvicorn.error")
 
 
 def refresh() -> None:
-    """Pull fixtures and scores from ESPN, then re-price unplayed matches."""
+    """Pull Premier League results, fixtures and scores, then re-price unplayed matches."""
     try:
+        update_club_results()
         n_fixtures = espn.save_fixtures()
         n_priced = predict_upcoming()
         log.info("refresh: %d fixtures updated, %d matches priced", n_fixtures, n_priced)

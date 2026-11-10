@@ -45,7 +45,21 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     warnings.filterwarnings("ignore", category=UserWarning)
 
-    if args.command == "pick":
+    if args.command == "pick" and args.competition == "epl":
+        import pandas as pd
+
+        from zuba.stacks.premier_league import price_fixtures
+
+        fixture = pd.DataFrame([{"date": dt.date.today(), "home_team": args.home,
+                                 "away_team": args.away}])
+        _, preds, _ = price_fixtures(fixture)
+        (p_home, p_draw, p_away), over = preds.result[0], preds.over25[0]
+        print(f"{args.home} vs {args.away}\n"
+              f"  {args.home} {p_home:.1%}  Draw {p_draw:.1%}  {args.away} {p_away:.1%}\n"
+              f"  Over 2.5 {over:.1%}  Under 2.5 {1 - over:.1%}")
+        for name, probs in preds.result_models.items():
+            print(f"    {name:12s} {probs[0][0]:.1%} / {probs[0][1]:.1%} / {probs[0][2]:.1%}")
+    elif args.command == "pick":
         from zuba.ensemble import Ensemble
 
         print(Ensemble().fit().predict(args.home, args.away, neutral=not args.home_advantage))
@@ -61,7 +75,7 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "predict":
         from zuba.markets import predict_upcoming
 
-        print(f"{predict_upcoming()} matches priced")
+        print(f"{predict_upcoming(args.competition)} matches priced")
     elif args.command == "backtest":
         from zuba.backtest import run
 
