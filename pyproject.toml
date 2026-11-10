@@ -1,7 +1,7 @@
 [project]
 name = "zuba"
-version = "1.0.0"
-description = "Match predictions for the 2026 FIFA World Cup from an ensemble of statistical and machine-learning models"
+version = "2.0.0"
+description = "Premier League and World Cup match predictions from a blend of statistical and machine-learning models, shown as fair odds"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
