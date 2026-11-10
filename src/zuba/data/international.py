@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-RESULTS_CSV = Path(__file__).resolve().parents[2] / "data" / "international_results.csv"
+RESULTS_CSV = Path(__file__).resolve().parents[3] / "data" / "international_results.csv"
 
 # Tournament finals, used as a match-importance feature by the Zeileis-Groll model.
 MAJOR_TOURNAMENTS = {
