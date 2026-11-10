@@ -4,7 +4,32 @@ Zuba predicts international football matches. It trains five models on every int
 
 ![Upcoming games page](docs/slate.png)
 
-## How well it does
+## Premier League backtest
+
+Version 2.0 adds a Premier League stack. It was tested on 3,520 matches from 2017-18 to 2026-27. Every match was predicted from earlier matches only, with the team models refitted each week, and scored against bookmakers' closing odds with the margin removed.
+
+**Match result**
+
+| Model | Log loss (95% interval) | Gap to bookmakers |
+|---|---|---|
+| Bookmakers' closing odds | **0.955** (0.938 to 0.971) | |
+| Weighted blend | 0.972 (0.956 to 0.987) | +0.017 (+0.012 to +0.022) |
+| Dixon-Coles | 0.973 | +0.019 |
+| Plain average | 0.974 | +0.019 |
+| XGBoost on form and shots | 0.977 | +0.022 |
+| CatBoost on pi-ratings | 0.980 | +0.025 |
+| LightGBM on Elo and form | 0.981 | +0.026 |
+| Baseline: long-run frequencies | 1.067 | |
+
+The blend beats each of its models and the plain average, and its probabilities are well calibrated (calibration error 0.005). It does not beat the bookmakers: the gap is 0.017 and its interval is entirely above zero. The blend scored better than the closing odds in one season of ten (2019-20).
+
+For over/under 2.5 goals the blend scores 0.679, against 0.675 for the bookmakers and 0.690 for the baseline.
+
+The blend weights are fitted on predictions from earlier seasons only. For live fixtures the result is 67% Dixon-Coles and 33% XGBoost; goals are 43% Dixon-Coles, 38% Poisson XGBoost and 19% GAP ratings on shots on target. CatBoost, LightGBM, and GAP on shots and on corners get no weight.
+
+Run it with `uv run zuba backtest --competition epl` (about 90 minutes). Full results are in `docs/backtest_epl.json`.
+
+## World Cup backtest
 
 Each World Cup below was predicted using only matches played before that tournament's opening game. Only group-stage games are scored, because recorded knockout scores include extra time.
 
