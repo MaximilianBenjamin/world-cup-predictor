@@ -15,7 +15,7 @@ const COPY: Record<Competition, { kicker: string; title: [string, string]; intro
   wc: {
     kicker: "Archive",
     title: ["World Cup", "2026"],
-    intro: "The tournament is over. These are the prices the model gave before each game.",
+    intro: "The tournament is over. Each game is priced by the current model using only matches played before the opening day, so no price has seen a World Cup result. Knockout scores include extra time.",
     empty: "No World Cup matches are stored in this database.",
   },
 };
