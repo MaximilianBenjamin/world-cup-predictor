@@ -17,7 +17,7 @@ import numpy as np
 import pandas as pd
 
 from zuba.data import load_international_results
-from zuba.ensemble import Ensemble
+from zuba.stacks.international import Ensemble
 
 # Opening day and last group-stage day of each tournament.
 WORLD_CUPS = {

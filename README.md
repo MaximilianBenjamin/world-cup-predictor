@@ -93,7 +93,7 @@ src/zuba/
   data.py            load the results file
   ratings/           Elo, pi-ratings, GAP, confederations
   models/            Dixon-Coles, CatBoost, LightGBM, Zeileis/Groll
-  ensemble.py        fit everything, average the predictions
+  stacks/            one model stack per competition: fit everything, blend the predictions
   markets.py         turn predictions into every market and save them
   espn.py            fixtures, scores and lineups
   backtest.py        score the models on past World Cups

@@ -60,7 +60,7 @@ def main(argv: list[str] | None = None) -> int:
         for name, probs in preds.result_models.items():
             print(f"    {name:12s} {probs[0][0]:.1%} / {probs[0][1]:.1%} / {probs[0][2]:.1%}")
     elif args.command == "pick":
-        from zuba.ensemble import Ensemble
+        from zuba.stacks.international import Ensemble
 
         print(Ensemble().fit().predict(args.home, args.away, neutral=not args.home_advantage))
     elif args.command == "fetch":

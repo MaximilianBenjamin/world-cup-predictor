@@ -23,7 +23,7 @@ import numpy as np
 import pandas as pd
 
 from zuba.db import get_connection
-from zuba.ensemble import Ensemble
+from zuba.stacks.international import Ensemble
 
 logger = logging.getLogger(__name__)
 
