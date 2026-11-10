@@ -1,9 +1,12 @@
 """Command-line entry point.
 
-    uv run zuba pick Brazil Morocco          # one-off prediction
-    uv run zuba fetch                        # pull fixtures and scores from ESPN
+    uv run zuba fetch                        # new results, fixtures and scores
     uv run zuba predict                      # price every unplayed fixture
-    uv run zuba backtest                     # score the models on past World Cups
+    uv run zuba pick Arsenal Chelsea         # one-off prediction
+    uv run zuba backtest                     # score the models on past seasons
+
+Every command takes --competition epl (Premier League, the default) or wc
+(World Cup): `uv run zuba pick Brazil Morocco --competition wc`.
 """
 
 from __future__ import annotations
@@ -16,22 +19,26 @@ import warnings
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(prog="zuba", description="World Cup match predictions")
+    parser = argparse.ArgumentParser(prog="zuba", description="Football match predictions")
     sub = parser.add_subparsers(dest="command", required=True)
+    shared = argparse.ArgumentParser(add_help=False)
+    shared.add_argument("--competition", choices=["epl", "wc"], default="epl",
+                        help="Premier League (default) or World Cup")
 
-    pick = sub.add_parser("pick", help="predict one match")
+    pick = sub.add_parser("pick", parents=[shared], help="predict one match")
     pick.add_argument("home")
     pick.add_argument("away")
     pick.add_argument("--home-advantage", action="store_true",
-                      help="the first team is playing at home (default: neutral venue)")
+                      help="World Cup only: the first team is the host nation "
+                           "(default: neutral venue). League games always have a home side")
 
-    fetch = sub.add_parser("fetch", help="update fixtures and scores from ESPN")
+    fetch = sub.add_parser("fetch", parents=[shared], help="update results, fixtures and scores")
     fetch.add_argument("--from", dest="start", type=dt.date.fromisoformat)
     fetch.add_argument("--to", dest="end", type=dt.date.fromisoformat)
 
-    sub.add_parser("predict", help="price every unplayed fixture in the database")
+    sub.add_parser("predict", parents=[shared], help="price every unplayed fixture in the database")
 
-    backtest = sub.add_parser("backtest", help="score the models on past World Cups")
+    backtest = sub.add_parser("backtest", parents=[shared], help="score the models on past seasons")
     backtest.add_argument("years", nargs="*", type=int, help="default: 2018 2022 2026")
 
     args = parser.parse_args(argv)
@@ -45,7 +52,12 @@ def main(argv: list[str] | None = None) -> int:
     elif args.command == "fetch":
         from zuba.espn import save_fixtures
 
-        print(f"{save_fixtures(args.start, args.end)} fixtures saved")
+        if args.competition == "epl":
+            from zuba.data.fetch import update_club_results
+
+            for league, n in update_club_results().items():
+                print(f"{league}: {n} matches played this season")
+        print(f"{save_fixtures(args.start, args.end, args.competition)} fixtures saved")
     elif args.command == "predict":
         from zuba.markets import predict_upcoming
 

@@ -1,13 +1,14 @@
-"""World Cup fixtures, scores and lineups from ESPN's public JSON API.
+"""Fixtures, scores and lineups from ESPN's public JSON API.
 
-ESPN needs no API key and returns clean national-team names, kickoff times and
-final scores. Starting XIs appear on the match summary endpoint about an hour
-before kickoff.
+ESPN needs no API key and returns team names, kickoff times and final scores.
+Starting XIs appear on the match summary endpoint about an hour before kickoff.
+Two competitions are covered: the Premier League ("epl") and the World Cup
+("wc").
 
-    fetch_fixtures(start, end)  -> list of fixture dicts
-    save_fixtures(start, end)   -> upsert them into `matches`
-    fetch_lineups(espn_id)      -> both teams' lineups, or None if not out yet
-    save_lineups(match_id)      -> upsert them into `lineups` / `formations`
+    fetch_fixtures(start, end, competition)  -> list of fixture dicts
+    save_fixtures(start, end, competition)   -> upsert them into `matches`
+    fetch_lineups(espn_id, competition)      -> both lineups, or None if not out yet
+    save_lineups(match_id)                   -> upsert them into `lineups` / `formations`
 """
 
 from __future__ import annotations
@@ -23,7 +24,8 @@ from zuba.db import get_connection
 
 logger = logging.getLogger(__name__)
 
-_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world"
+_API = "https://site.api.espn.com/apis/site/v2/sports/soccer"
+LEAGUE_SLUGS = {"epl": "eng.1", "wc": "fifa.world"}
 
 # ESPN's spelling -> the spelling in the training data.
 TEAM_NAMES = {
@@ -33,8 +35,46 @@ TEAM_NAMES = {
     "Türkiye": "Turkey",
 }
 
-# Knockout fixtures are listed before the teams are known, with names like
-# "Group A Winner" or "Semifinal 1 Loser". Those rows are skipped.
+# ESPN's club names -> football-data.co.uk's. Clubs spelled the same in both
+# (Arsenal, Chelsea, Everton, ...) aren't listed.
+CLUB_NAMES = {
+    "AFC Bournemouth": "Bournemouth",
+    "Birmingham City": "Birmingham",
+    "Blackburn Rovers": "Blackburn",
+    "Bolton Wanderers": "Bolton",
+    "Brighton & Hove Albion": "Brighton",
+    "Cardiff City": "Cardiff",
+    "Charlton Athletic": "Charlton",
+    "Coventry City": "Coventry",
+    "Derby County": "Derby",
+    "Huddersfield Town": "Huddersfield",
+    "Hull City": "Hull",
+    "Ipswich Town": "Ipswich",
+    "Leeds United": "Leeds",
+    "Leicester City": "Leicester",
+    "Luton Town": "Luton",
+    "Manchester City": "Man City",
+    "Manchester United": "Man United",
+    "Newcastle United": "Newcastle",
+    "Norwich City": "Norwich",
+    "Nottingham Forest": "Nott'm Forest",
+    "Oxford United": "Oxford",
+    "Plymouth Argyle": "Plymouth",
+    "Preston North End": "Preston",
+    "Queens Park Rangers": "QPR",
+    "Rotherham United": "Rotherham",
+    "Sheffield Wednesday": "Sheffield Weds",
+    "Stoke City": "Stoke",
+    "Swansea City": "Swansea",
+    "Tottenham Hotspur": "Tottenham",
+    "West Bromwich Albion": "West Brom",
+    "West Ham United": "West Ham",
+    "Wigan Athletic": "Wigan",
+    "Wolverhampton Wanderers": "Wolves",
+}
+
+# World Cup knockout fixtures are listed before the teams are known, with names
+# like "Group A Winner" or "Semifinal 1 Loser". Those rows are skipped.
 _PLACEHOLDER = re.compile(
     r"winner|loser|runner|\bTBD\b|to be determined|round of|group [a-l]\b|"
     r"quarter|semi[- ]?final|\bfinal\b|place|\d(st|nd|rd|th)?\b",
@@ -42,8 +82,13 @@ _PLACEHOLDER = re.compile(
 )
 
 
-def team_name(espn_name: str) -> str:
-    return TEAM_NAMES.get(espn_name, espn_name)
+def team_name(espn_name: str, competition: str = "wc") -> str:
+    names = CLUB_NAMES if competition == "epl" else TEAM_NAMES
+    return names.get(espn_name, espn_name)
+
+
+def _base(competition: str) -> str:
+    return f"{_API}/{LEAGUE_SLUGS[competition]}"
 
 
 def _get(url: str) -> dict:
@@ -52,12 +97,12 @@ def _get(url: str) -> dict:
         return json.load(resp)
 
 
-def _parse_event(event: dict) -> dict | None:
+def _parse_event(event: dict, competition: str = "wc") -> dict | None:
     comp = event["competitions"][0]
     sides = {c["homeAway"]: c for c in comp["competitors"]}
     home, away = sides["home"], sides["away"]
     home_name, away_name = home["team"]["displayName"], away["team"]["displayName"]
-    if _PLACEHOLDER.search(home_name) or _PLACEHOLDER.search(away_name):
+    if competition == "wc" and (_PLACEHOLDER.search(home_name) or _PLACEHOLDER.search(away_name)):
         return None
 
     kickoff = dt.datetime.fromisoformat(event["date"].replace("Z", "+00:00"))
@@ -71,29 +116,30 @@ def _parse_event(event: dict) -> dict | None:
         "match_id": int(event["id"]),
         "date": kickoff.date().isoformat(),
         "kickoff_ts": kickoff.isoformat(),
-        "home_team": team_name(home_name),
-        "away_team": team_name(away_name),
+        "competition": competition,
+        "home_team": team_name(home_name, competition),
+        "away_team": team_name(away_name, competition),
         "home_score": score(home),
         "away_score": score(away),
-        # ESPN doesn't flag neutral venues reliably. Almost every World Cup game
-        # is at a neutral ground, so that is the default.
-        "neutral": comp.get("neutralSite") is not False,
+        # League games are never neutral. ESPN doesn't flag World Cup venues
+        # reliably, and almost all of them are neutral, so that is the default.
+        "neutral": competition == "wc" and comp.get("neutralSite") is not False,
         "completed": completed,
     }
 
 
-def fetch_fixtures(start: dt.date, end: dt.date) -> list[dict]:
-    """All confirmed World Cup fixtures between start and end (inclusive).
+def fetch_fixtures(start: dt.date, end: dt.date, competition: str = "epl") -> list[dict]:
+    """All confirmed fixtures between start and end (inclusive).
 
-    One request per day: ESPN's date-range form of the query is unreliable.
+    One request per day: ESPN rejects the date-range form of the query.
     """
     fixtures: dict[int, dict] = {}
     day = start
     while day <= end:
-        data = _get(f"{_BASE}/scoreboard?dates={day:%Y%m%d}")
+        data = _get(f"{_base(competition)}/scoreboard?dates={day:%Y%m%d}")
         for event in data.get("events", []):
             try:
-                fx = _parse_event(event)
+                fx = _parse_event(event, competition)
             except (KeyError, ValueError) as exc:
                 logger.warning("skipping malformed ESPN event %s: %r", event.get("id"), exc)
                 continue
@@ -106,19 +152,20 @@ def fetch_fixtures(start: dt.date, end: dt.date) -> list[dict]:
 def save_fixtures(
     start: dt.date | None = None,
     end: dt.date | None = None,
+    competition: str = "epl",
     conn: sqlite3.Connection | None = None,
 ) -> int:
     """Upsert fixtures into `matches`. Defaults to 3 days back to 25 days ahead,
-    so recent games get their final scores and new knockout ties show up."""
+    so recent games get their final scores and newly scheduled ones show up."""
     conn = conn or get_connection()
     today = dt.date.today()
     fixtures = fetch_fixtures(start or today - dt.timedelta(days=3),
-                              end or today + dt.timedelta(days=25))
+                              end or today + dt.timedelta(days=25), competition)
     conn.executemany(
         """
-        INSERT INTO matches (match_id, date, kickoff_ts, home_team, away_team,
+        INSERT INTO matches (match_id, competition, date, kickoff_ts, home_team, away_team,
                              home_score, away_score, neutral, completed)
-        VALUES (:match_id, :date, :kickoff_ts, :home_team, :away_team,
+        VALUES (:match_id, :competition, :date, :kickoff_ts, :home_team, :away_team,
                 :home_score, :away_score, :neutral, :completed)
         ON CONFLICT(match_id) DO UPDATE SET
             date = excluded.date, kickoff_ts = excluded.kickoff_ts,
@@ -131,13 +178,13 @@ def save_fixtures(
     return len(fixtures)
 
 
-def fetch_lineups(espn_id: int) -> dict | None:
+def fetch_lineups(espn_id: int, competition: str = "epl") -> dict | None:
     """{"home": side, "away": side}, or None until both starting XIs are out.
 
     Each side is {"formation": str | None, "players": [{name, shirt, position,
     starter, slot}, ...]}.
     """
-    data = _get(f"{_BASE}/summary?event={espn_id}")
+    data = _get(f"{_base(competition)}/summary?event={espn_id}")
     out: dict[str, dict] = {}
     for roster in data.get("rosters") or []:
         side = roster.get("homeAway")
@@ -171,8 +218,9 @@ def save_lineups(match_id: int, conn: sqlite3.Connection | None = None) -> bool:
     Existing rows are replaced, so a late change to the team sheet is picked up.
     """
     conn = conn or get_connection()
+    row = conn.execute("SELECT competition FROM matches WHERE match_id = ?", (match_id,)).fetchone()
     try:
-        lineups = fetch_lineups(match_id)
+        lineups = fetch_lineups(match_id, row["competition"] if row else "epl")
     except OSError as exc:
         logger.warning("lineup fetch failed for match %s: %r", match_id, exc)
         return False

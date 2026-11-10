@@ -1,5 +1,6 @@
 """SQLite storage for fixtures, predictions and lineups.
 
+Matches from both competitions (Premier League and World Cup) share the tables.
 The database is a local file (`zuba.db` at the repo root, or `ZUBA_DB` if set).
 It only holds things that change during a tournament; the training data lives
 in `data/international_results.csv`. `get_connection()` creates the tables on
@@ -17,6 +18,7 @@ DB_PATH = Path(os.environ.get("ZUBA_DB", Path(__file__).resolve().parents[2] / "
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS matches (
     match_id    INTEGER PRIMARY KEY,   -- ESPN event id
+    competition TEXT NOT NULL DEFAULT 'wc',  -- 'epl' or 'wc'
     date        TEXT NOT NULL,         -- UTC calendar date, YYYY-MM-DD
     kickoff_ts  TEXT,                  -- ISO timestamp with UTC offset
     home_team   TEXT NOT NULL,         -- names as used in the training data
@@ -62,4 +64,10 @@ def get_connection(path: Path | str | None = None) -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA foreign_keys=ON")
     conn.executescript(SCHEMA)
+    # Databases created before the Premier League was added lack this column;
+    # everything in them is a World Cup match.
+    columns = {r["name"] for r in conn.execute("PRAGMA table_info(matches)")}
+    if "competition" not in columns:
+        conn.execute("ALTER TABLE matches ADD COLUMN competition TEXT NOT NULL DEFAULT 'wc'")
+        conn.commit()
     return conn
