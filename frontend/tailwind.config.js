@@ -28,7 +28,7 @@ export default {
       },
       animation: {
         rise: "rise 0.35s cubic-bezier(0.16,1,0.3,1) both",
-        marquee: "marquee 60s linear infinite",
+        marquee: "marquee 110s linear infinite",
       },
     },
   },

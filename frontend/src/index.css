@@ -44,7 +44,7 @@ body {
   /* A panel: flat, square, one hard rule on top. */
   .panel { background: #131315; border: 1px solid #2c2c31; border-top: 3px solid #d81f2a; }
 
-  .ticker-track { display: inline-flex; gap: 2.5rem; white-space: nowrap; animation: marquee 60s linear infinite; }
+  .ticker-track { display: inline-flex; gap: 2.5rem; white-space: nowrap; animation: marquee 110s linear infinite; }
   .ticker:hover .ticker-track { animation-play-state: paused; }
 }
 
