@@ -9,6 +9,12 @@ nation, major tournament, competitive match, and each side's confederation.
 
 Three classifiers (L1 logistic regression, random forest, XGBoost) are averaged,
 then each outcome's probability is recalibrated with isotonic regression.
+
+The recalibration is learned on matches the classifiers were not trained on:
+they are first fitted on the earliest 80% of matches, the isotonic curves are
+fitted to their predictions for the latest 20%, and the classifiers are then
+refitted on everything. Calibrating on the training rows themselves would only
+teach the curves how overconfident a random forest is about data it has seen.
 """
 
 from __future__ import annotations
@@ -24,6 +30,7 @@ from sklearn.preprocessing import StandardScaler
 from zuba.ratings.confederations import confederation_of
 
 _LABELS = {"H": 0, "D": 1, "A": 2}
+CALIBRATION_SHARE = 0.2
 _CONFEDERATIONS = ["UEFA", "CONMEBOL", "CAF", "AFC", "CONCACAF", "OFC", "Other"]
 FEATURES = (
     ["elo_diff", "elo_home", "elo_away", "neutral", "host", "major", "competitive"]
@@ -74,18 +81,25 @@ class ZeileisGroll:
         p_logit = self._logit.predict_proba(self._scaler.transform(X))
         return (p_logit + self._rf.predict_proba(X) + self._xgb.predict_proba(X)) / 3.0
 
-    def fit(self, rated: pd.DataFrame) -> ZeileisGroll:
-        X = build_features(rated).to_numpy()
-        y = rated["result"].map(_LABELS).to_numpy()
+    def _fit_classifiers(self, X: np.ndarray, y: np.ndarray) -> None:
         self._logit.fit(self._scaler.fit_transform(X), y)
         self._rf.fit(X, y)
         self._xgb.fit(X, y)
 
-        raw = self._raw(X)
+    def fit(self, rated: pd.DataFrame) -> ZeileisGroll:
+        """rated: matches in date order."""
+        X = build_features(rated).to_numpy()
+        y = rated["result"].map(_LABELS).to_numpy()
+
+        cut = int(len(X) * (1 - CALIBRATION_SHARE))
+        self._fit_classifiers(X[:cut], y[:cut])
+        held = self._raw(X[cut:])
         self._calibrators = [
-            IsotonicRegression(out_of_bounds="clip").fit(raw[:, k], (y == k).astype(int))
+            IsotonicRegression(out_of_bounds="clip", y_min=0.01, y_max=0.99)
+            .fit(held[:, k], (y[cut:] == k).astype(int))
             for k in range(3)
         ]
+        self._fit_classifiers(X, y)
         return self
 
     def predict_proba(self, rated: pd.DataFrame) -> np.ndarray:
