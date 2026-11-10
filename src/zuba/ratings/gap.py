@@ -100,6 +100,11 @@ class GAPRatings:
                 self._ou_models[line] = LogisticRegression(max_iter=200).fit(X, y)
         return self
 
+    @property
+    def teams(self) -> set[str]:
+        """Teams seen in training."""
+        return set(self._team_index)
+
     def predict(self, home_team: str, away_team: str) -> dict[str, float]:
         """{"over_2_5": p, "under_2_5": 1 - p, ...} for each fitted line."""
         if self._params is None:
