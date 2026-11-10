@@ -35,7 +35,7 @@ export default function TablePage() {
       )}
 
       {data && (
-        <div className="space-y-12">
+        <div className="grid lg:grid-cols-2 gap-x-8 gap-y-12 items-start">
           <Current data={data} />
           <Predicted data={data} />
         </div>
@@ -48,13 +48,14 @@ function SectionHead({ title, children }: { title: string; children: React.React
   return (
     <div className="border-b border-line pb-2">
       <h2 className="label text-chalk text-sm">{title}</h2>
-      <p className="text-dust text-sm mt-1 max-w-2xl">{children}</p>
+      <p className="text-dust text-sm mt-1 lg:h-10">{children}</p>
     </div>
   );
 }
 
 const th = "py-2 px-2 font-semibold text-right";
 const td = "num py-2 px-2 text-right";
+const stuck = "sticky left-0 z-10 bg-ink group-hover:bg-coal shadow-[1px_0_0_#2c2c31]";
 
 /** Champions League places end after 4th; the bottom three go down. A heavier
  *  rule under those rows marks the lines. */
@@ -62,13 +63,26 @@ function zoneRule(position: number, clubs: number): string {
   return position === 4 || position === clubs - 3 ? "border-b-2 border-b-dust" : "border-b border-line";
 }
 
-function Club({ team }: { team: string }) {
+/** Position and club. This cell stays put while the rest of the row scrolls
+ *  sideways. */
+function ClubCell({ position, team }: { position: number; team: string }) {
   return (
-    <span className="flex items-center gap-2.5 min-w-0">
-      <TeamBadge team={team} size={24} />
-      <span className="font-semibold truncate">{teamName(team)}</span>
-    </span>
+    <td className={`${stuck} py-2 pr-3`}>
+      <span className="flex items-center gap-2.5">
+        <span className="num text-dust w-5 shrink-0">{position}</span>
+        <TeamBadge team={team} size={24} />
+        <span className="font-semibold whitespace-nowrap">{teamName(team)}</span>
+      </span>
+    </td>
   );
+}
+
+function ClubHead() {
+  return <th className={`${stuck} py-2 pr-3 font-semibold`}>Club</th>;
+}
+
+function ScrollHint() {
+  return <p className="label text-dust mt-2">Scroll the table sideways for more</p>;
 }
 
 // ---- predicted final table ----
@@ -94,20 +108,16 @@ function Predicted({ data }: { data: TableResponse }) {
   return (
     <section>
       <SectionHead title="Predicted final table">
-        The {data.matches_remaining} matches still to play, priced by the model and played out{" "}
-        {data.simulations.toLocaleString("en-GB")} times. Points and goals are averages across
-        those seasons. Updated after each round of results.
+        The {data.matches_remaining} matches still to play, simulated{" "}
+        {data.simulations.toLocaleString("en-GB")} times. Points and goals are averages.
       </SectionHead>
       <div className="overflow-x-auto">
-        <table className="w-full text-left min-w-[640px]">
+        <table className="w-full text-left min-w-[760px]">
           <thead>
             <tr className="label text-dust border-b border-line">
-              <th className="py-2 pr-2 font-semibold w-8">#</th>
-              <th className="py-2 px-2 font-semibold w-10 text-right" title="Places gained or lost from the current table">
-                Move
-              </th>
-              <th className="py-2 px-2 font-semibold">Club</th>
+              <ClubHead />
               <th className={th}>Pts</th>
+              <th className={th} title="Places gained or lost from the current table">Move</th>
               <th className={th}>GD</th>
               <th className={th}>GF</th>
               <th className={th}>GA</th>
@@ -119,11 +129,10 @@ function Predicted({ data }: { data: TableResponse }) {
           </thead>
           <tbody>
             {data.predicted.map((r) => (
-              <tr key={r.team} className={`${zoneRule(r.position, n)} hover:bg-coal`}>
-                <td className="num py-2 pr-2 text-dust">{r.position}</td>
-                <td className={`${td} text-sm`}><Movement row={r} /></td>
-                <td className="py-2 px-2"><Club team={r.team} /></td>
+              <tr key={r.team} className={`group ${zoneRule(r.position, n)} hover:bg-coal`}>
+                <ClubCell position={r.position} team={r.team} />
                 <td className={`${td} text-lg font-bold`}>{Math.round(r.points)}</td>
+                <td className={`${td} text-sm`}><Movement row={r} /></td>
                 <td className={td}>{signedRound(r.goal_difference)}</td>
                 <td className={`${td} text-dust`}>{Math.round(r.goals_for)}</td>
                 <td className={`${td} text-dust`}>{Math.round(r.goals_against)}</td>
@@ -140,7 +149,9 @@ function Predicted({ data }: { data: TableResponse }) {
           </tbody>
         </table>
       </div>
+      <ScrollHint />
       <p className="text-sm text-dust mt-3 max-w-2xl">
+        Updated after each round of results. Move is places gained or lost from the current table.
         Range is where a club finishes in 9 simulated seasons out of 10. Every remaining match is
         priced from today's form, and a club's strength does not change during a simulated season,
         so the real spread is somewhat wider.
@@ -164,39 +175,38 @@ function Current({ data }: { data: TableResponse }) {
         {data.matches_played} matches played, results to {shortDate(data.results_to)}.
       </SectionHead>
       <div className="overflow-x-auto">
-        <table className="w-full text-left min-w-[520px]">
+        <table className="w-full text-left min-w-[600px]">
           <thead>
             <tr className="label text-dust border-b border-line">
-              <th className="py-2 pr-2 font-semibold w-8">#</th>
-              <th className="py-2 px-2 font-semibold">Club</th>
+              <ClubHead />
+              <th className={th} title="Points">Pts</th>
               <th className={th} title="Played">P</th>
               <th className={th} title="Won">W</th>
               <th className={th} title="Drawn">D</th>
               <th className={th} title="Lost">L</th>
               <th className={th} title="Goals for">GF</th>
               <th className={th} title="Goals against">GA</th>
-              <th className={th} title="Goal difference">GD</th>
-              <th className={`${th} pr-0`} title="Points">Pts</th>
+              <th className={`${th} pr-0`} title="Goal difference">GD</th>
             </tr>
           </thead>
           <tbody>
             {data.current.map((r: TableRow) => (
-              <tr key={r.team} className={`${zoneRule(r.position, n)} hover:bg-coal`}>
-                <td className="num py-2 pr-2 text-dust">{r.position}</td>
-                <td className="py-2 px-2"><Club team={r.team} /></td>
+              <tr key={r.team} className={`group ${zoneRule(r.position, n)} hover:bg-coal`}>
+                <ClubCell position={r.position} team={r.team} />
+                <td className={`${td} text-lg font-bold`}>{r.points}</td>
                 <td className={`${td} text-dust`}>{r.played}</td>
                 <td className={`${td} text-dust`}>{r.won}</td>
                 <td className={`${td} text-dust`}>{r.drawn}</td>
                 <td className={`${td} text-dust`}>{r.lost}</td>
                 <td className={td}>{r.goals_for}</td>
                 <td className={td}>{r.goals_against}</td>
-                <td className={td}>{signedRound(r.goal_difference)}</td>
-                <td className={`${td} pr-0 text-lg font-bold`}>{r.points}</td>
+                <td className={`${td} pr-0`}>{signedRound(r.goal_difference)}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <ScrollHint />
     </section>
   );
 }
