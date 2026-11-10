@@ -4,6 +4,7 @@
     uv run zuba predict                      # price every unplayed fixture
     uv run zuba pick Arsenal Chelsea         # one-off prediction
     uv run zuba backtest                     # score the models on past seasons
+    uv run zuba table                        # current table and predicted final table
     uv run zuba snapshot save                # write fixtures and predictions to data/live/site.json
     uv run zuba snapshot load                # read them back into the database
 
@@ -44,6 +45,8 @@ def main(argv: list[str] | None = None) -> int:
     backtest.add_argument("years", nargs="*", type=int,
                           help="World Cup only: tournaments to score (default: 2018 2022 2026)")
 
+    sub.add_parser("table", help="write the current and predicted Premier League tables")
+
     snapshot = sub.add_parser("snapshot", help="save or load fixtures and predictions as JSON")
     snapshot.add_argument("action", choices=["save", "load"])
 
@@ -82,6 +85,16 @@ def main(argv: list[str] | None = None) -> int:
         from zuba.markets import predict_upcoming
 
         print(f"{predict_upcoming(args.competition)} matches priced")
+    elif args.command == "table":
+        from zuba import table
+
+        built = table.write()
+        print(f"{built['season']}: {built['matches_played']} played, "
+              f"{built['matches_remaining']} simulated {built['simulations']:,} times\n")
+        print(f"{'':3}{'Predicted final table':22}{'Pts':>6}{'GD':>7}{'Title':>8}{'Top 4':>8}{'Down':>8}")
+        for r in built["predicted"]:
+            print(f"{r['position']:>2} {r['team']:22}{r['points']:>6.1f}{r['goal_difference']:>+7.1f}"
+                  f"{r['p_title']:>8.1%}{r['p_top4']:>8.1%}{r['p_relegation']:>8.1%}")
     elif args.command == "snapshot":
         from zuba import snapshot as snap
         from zuba.db import get_connection
