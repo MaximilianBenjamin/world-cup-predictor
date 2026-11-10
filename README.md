@@ -91,7 +91,7 @@ The Championship is included so promoted teams arrive with ratings. Bookmaker od
 
 The blend weights minimise log loss on predictions made for earlier seasons, so a model only gets weight if it adds something the others lack. After blending, the Dixon-Coles scoreline grid is rescaled until its result and over/under 2.5 probabilities equal the blended ones, so every market on a match page agrees with every other.
 
-Each day a GitHub Actions run downloads new results and fixtures, refits the models, prices every unplayed match and commits the result to `data/live/site.json`. The hosted app serves that file and fits nothing itself. A prediction is never rewritten once its match has been played, so the season record on the site compares results with what the model said beforehand.
+Each day a GitHub Actions run downloads new results and fixtures, refits the models, prices every unplayed match, simulates the rest of the season, and commits the results to `data/live/`. The hosted app serves that file and fits nothing itself. A prediction is never rewritten once its match has been played, so the season record on the site compares results with what the model said beforehand.
 
 ### World Cup
 
@@ -113,6 +113,12 @@ data/international_results.csv   (49,000 matches since 1872)
 ```
 
 Every feature for a match comes from games played before it. Elo and pi-ratings are recorded before each result is applied, form skips the current game, and the backtest cuts the data off at each tournament's opening day.
+
+### The predicted table
+
+The Table page shows the league as it stands and where the model expects it to finish. Each pair of clubs meets home and away, so the matches left are the pairs with no result yet. Every one is priced by the blend, and the rest of the season is played out 20,000 times by drawing a scoreline for each match from its grid. The predicted table is the average of those seasons, with each club's chance of the title, the top four and relegation. `uv run zuba table` rebuilds it (about 35 seconds), and the daily refresh runs it after new results.
+
+Each remaining match is priced from today's form, and a club's strength stays fixed within a simulated season, so the ranges shown are somewhat narrower than they should be.
 
 ### Combined picks and fair odds
 
@@ -166,6 +172,7 @@ src/zuba/
   markets.py         turn predictions into every market and save them
   evaluate/          walk-forward backtest, metrics with intervals, bookmaker benchmark
   espn.py            fixtures, scores and lineups
+  table.py           the current table, and the season simulated to its end
   snapshot.py        save and load fixtures and predictions as JSON
   cli.py             the `zuba` command
   api/               FastAPI app, fair-odds board, combined picks, record
