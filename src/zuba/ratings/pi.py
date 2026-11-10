@@ -37,7 +37,8 @@ def build_pi_features(df: pd.DataFrame) -> tuple[pd.DataFrame, PiRatingSystem]:
     Returns the frame and the rating system after the last match, which is
     what predictions for upcoming games should use.
     """
-    df = df.sort_values("date").reset_index(drop=True)
+    # A stable sort keeps same-day matches in the order they came in.
+    df = df.sort_values("date", kind="stable").reset_index(drop=True)
     system = PiRatingSystem()
     rows = []
     for r in df.itertuples(index=False):
