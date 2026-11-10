@@ -99,3 +99,28 @@ def test_combine(client):
     ]})
     assert res.json()["combined_p"] == pytest.approx(0.6)
     assert client.post("/api/combine", json={"legs": []}).status_code == 400
+
+
+def test_snapshot_round_trip(tmp_path):
+    from zuba import snapshot
+    from zuba.db import get_connection
+
+    conn = get_connection(tmp_path / "a.db")
+    conn.execute(
+        "INSERT INTO matches (match_id, competition, date, home_team, away_team, home_score, "
+        "away_score, neutral, completed) VALUES (7, 'epl', '2026-09-01', 'Arsenal', 'Chelsea', "
+        "2, 0, 0, 1)"
+    )
+    probs = {"home_win_p": 0.5, "draw_p": 0.3, "away_win_p": 0.2}
+    conn.execute("INSERT INTO predictions VALUES (7, '2026-08-31', '2.0', ?)", (json.dumps(probs),))
+    conn.commit()
+    path = tmp_path / "live" / "site.json"
+    assert snapshot.save(conn, path) == 1
+
+    fresh = get_connection(tmp_path / "b.db")
+    assert snapshot.load_if_empty(fresh, path) == 1
+    assert dict(fresh.execute("SELECT * FROM matches").fetchone()) == dict(
+        conn.execute("SELECT * FROM matches").fetchone())
+    assert json.loads(fresh.execute("SELECT probs FROM predictions").fetchone()[0]) == probs
+    assert snapshot.load_if_empty(fresh, path) == 0          # already has matches
+    assert snapshot.load(fresh, tmp_path / "missing.json") == 0

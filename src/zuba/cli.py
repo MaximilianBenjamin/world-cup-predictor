@@ -4,6 +4,8 @@
     uv run zuba predict                      # price every unplayed fixture
     uv run zuba pick Arsenal Chelsea         # one-off prediction
     uv run zuba backtest                     # score the models on past seasons
+    uv run zuba snapshot save                # write fixtures and predictions to data/live/site.json
+    uv run zuba snapshot load                # read them back into the database
 
 Every command takes --competition epl (Premier League, the default) or wc
 (World Cup): `uv run zuba pick Brazil Morocco --competition wc`.
@@ -42,6 +44,9 @@ def main(argv: list[str] | None = None) -> int:
     backtest.add_argument("years", nargs="*", type=int,
                           help="World Cup only: tournaments to score (default: 2018 2022 2026)")
 
+    snapshot = sub.add_parser("snapshot", help="save or load fixtures and predictions as JSON")
+    snapshot.add_argument("action", choices=["save", "load"])
+
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     warnings.filterwarnings("ignore", category=UserWarning)
@@ -77,6 +82,12 @@ def main(argv: list[str] | None = None) -> int:
         from zuba.markets import predict_upcoming
 
         print(f"{predict_upcoming(args.competition)} matches priced")
+    elif args.command == "snapshot":
+        from zuba import snapshot as snap
+        from zuba.db import get_connection
+
+        n = getattr(snap, args.action)(get_connection())
+        print(f"{n} matches {'saved to' if args.action == 'save' else 'loaded from'} {snap.SNAPSHOT}")
     elif args.command == "backtest" and args.competition == "epl":
         from zuba.evaluate.report import print_report, run_premier_league
 

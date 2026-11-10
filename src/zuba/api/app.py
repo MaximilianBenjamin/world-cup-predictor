@@ -16,6 +16,10 @@ Optional background jobs, set by environment variable:
                                Africa/Johannesburg)
     ZUBA_LINEUPS=1             fetch lineups from 50 minutes before each kickoff
 
+On startup, an empty database is filled from data/live/site.json if that file
+exists. That is how the hosted app gets its fixtures and predictions: the
+daily GitHub Actions run writes the file and the app only serves it.
+
 If frontend/dist exists (run `npm run build` in frontend/), the site is served
 from the same port.
 """
@@ -39,7 +43,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from zuba import espn
+from zuba import espn, snapshot
 from zuba.api import board, performance
 from zuba.api.schemas import (
     CombineRequest,
@@ -109,6 +113,8 @@ def _lineup_watch(lead_minutes: int = 50) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    if n := snapshot.load_if_empty(get_connection()):
+        log.info("loaded %d matches from %s", n, snapshot.SNAPSHOT)
     if at := os.environ.get("ZUBA_REFRESH_AT", "").strip():
         tz = ZoneInfo(os.environ.get("ZUBA_REFRESH_TZ", "Africa/Johannesburg"))
         threading.Thread(target=_daily_refresh, args=(at, tz), daemon=True).start()
