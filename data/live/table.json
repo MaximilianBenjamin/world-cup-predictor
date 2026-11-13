@@ -258,8 +258,8 @@
    "average_position": 1.3,
    "position_low": 1,
    "position_high": 3,
-   "p_title": 0.7706,
-   "p_top4": 0.9984,
+   "p_title": 0.7713,
+   "p_top4": 0.9983,
    "p_relegation": 0.0,
    "position": 1
   },
@@ -269,13 +269,13 @@
    "played": 38,
    "points": 76.1,
    "goals_for": 76.0,
-   "goals_against": 41.6,
-   "goal_difference": 34.4,
+   "goals_against": 41.5,
+   "goal_difference": 34.5,
    "average_position": 2.42,
    "position_low": 1,
    "position_high": 4,
-   "p_title": 0.1628,
-   "p_top4": 0.9578,
+   "p_title": 0.1626,
+   "p_top4": 0.9579,
    "p_relegation": 0.0,
    "position": 2
   },
@@ -290,8 +290,8 @@
    "average_position": 3.33,
    "position_low": 2,
    "position_high": 6,
-   "p_title": 0.0461,
-   "p_top4": 0.8525,
+   "p_title": 0.0459,
+   "p_top4": 0.8528,
    "p_relegation": 0.0,
    "position": 3
   },
@@ -306,8 +306,8 @@
    "average_position": 4.03,
    "position_low": 2,
    "position_high": 7,
-   "p_title": 0.019,
-   "p_top4": 0.7198,
+   "p_title": 0.0187,
+   "p_top4": 0.721,
    "p_relegation": 0.0,
    "position": 4
   },
@@ -315,7 +315,7 @@
    "team": "Bournemouth",
    "current_position": 7,
    "played": 38,
-   "points": 58.1,
+   "points": 58.2,
    "goals_for": 59.3,
    "goals_against": 50.9,
    "goal_difference": 8.4,
@@ -323,7 +323,7 @@
    "position_low": 4,
    "position_high": 13,
    "p_title": 0.0004,
-   "p_top4": 0.1374,
+   "p_top4": 0.1376,
    "p_relegation": 0.0004,
    "position": 5
   },
@@ -339,7 +339,7 @@
    "position_low": 4,
    "position_high": 13,
    "p_title": 0.0006,
-   "p_top4": 0.1285,
+   "p_top4": 0.1278,
    "p_relegation": 0.0008,
    "position": 6
   },
@@ -350,13 +350,13 @@
    "points": 54.9,
    "goals_for": 57.7,
    "goals_against": 55.4,
-   "goal_difference": 2.4,
-   "average_position": 8.61,
+   "goal_difference": 2.3,
+   "average_position": 8.62,
    "position_low": 4,
    "position_high": 14,
    "p_title": 0.0001,
-   "p_top4": 0.0639,
-   "p_relegation": 0.0041,
+   "p_top4": 0.0637,
+   "p_relegation": 0.004,
    "position": 7
   },
   {
@@ -371,7 +371,7 @@
    "position_low": 4,
    "position_high": 14,
    "p_title": 0.0002,
-   "p_top4": 0.0521,
+   "p_top4": 0.0519,
    "p_relegation": 0.0034,
    "position": 8
   },
@@ -386,8 +386,8 @@
    "average_position": 9.64,
    "position_low": 5,
    "position_high": 15,
-   "p_title": 0.0001,
-   "p_top4": 0.0323,
+   "p_title": 0.0,
+   "p_top4": 0.0321,
    "p_relegation": 0.0065,
    "position": 9
   },
@@ -403,8 +403,8 @@
    "position_low": 5,
    "position_high": 16,
    "p_title": 0.0001,
-   "p_top4": 0.0215,
-   "p_relegation": 0.0104,
+   "p_top4": 0.0214,
+   "p_relegation": 0.0103,
    "position": 10
   },
   {
@@ -419,8 +419,8 @@
    "position_low": 6,
    "position_high": 17,
    "p_title": 0.0001,
-   "p_top4": 0.0124,
-   "p_relegation": 0.0241,
+   "p_top4": 0.0123,
+   "p_relegation": 0.024,
    "position": 11
   },
   {
@@ -435,8 +435,8 @@
    "position_low": 6,
    "position_high": 17,
    "p_title": 0.0,
-   "p_top4": 0.0095,
-   "p_relegation": 0.0316,
+   "p_top4": 0.0094,
+   "p_relegation": 0.0317,
    "position": 12
   },
   {
@@ -452,7 +452,7 @@
    "position_high": 17,
    "p_title": 0.0,
    "p_top4": 0.0073,
-   "p_relegation": 0.0354,
+   "p_relegation": 0.0355,
    "position": 13
   },
   {
@@ -483,8 +483,8 @@
    "position_low": 8,
    "position_high": 18,
    "p_title": 0.0,
-   "p_top4": 0.0019,
-   "p_relegation": 0.0965,
+   "p_top4": 0.0018,
+   "p_relegation": 0.0962,
    "position": 15
   },
   {
@@ -500,23 +500,23 @@
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0001,
-   "p_relegation": 0.4283,
+   "p_relegation": 0.4286,
    "position": 16
   },
   {
    "team": "Ipswich",
    "current_position": 14,
    "played": 38,
-   "points": 36.7,
+   "points": 36.6,
    "goals_for": 46.6,
    "goals_against": 73.6,
-   "goal_difference": -26.9,
+   "goal_difference": -27.0,
    "average_position": 17.06,
    "position_low": 13,
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0,
-   "p_relegation": 0.4952,
+   "p_relegation": 0.4957,
    "position": 17
   },
   {
@@ -526,13 +526,13 @@
    "points": 36.5,
    "goals_for": 35.6,
    "goals_against": 59.8,
-   "goal_difference": -24.1,
+   "goal_difference": -24.2,
    "average_position": 17.05,
    "position_low": 12,
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0,
-   "p_relegation": 0.4899,
+   "p_relegation": 0.4902,
    "position": 18
   },
   {
@@ -543,12 +543,12 @@
    "goals_for": 41.4,
    "goals_against": 70.0,
    "goal_difference": -28.5,
-   "average_position": 17.49,
+   "average_position": 17.48,
    "position_low": 13,
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0001,
-   "p_relegation": 0.5746,
+   "p_relegation": 0.5741,
    "position": 19
   },
   {
@@ -564,7 +564,7 @@
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0,
-   "p_relegation": 0.749,
+   "p_relegation": 0.7488,
    "position": 20
   }
  ]
