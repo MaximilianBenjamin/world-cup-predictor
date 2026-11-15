@@ -275,7 +275,7 @@
    "position_low": 1,
    "position_high": 4,
    "p_title": 0.1625,
-   "p_top4": 0.9581,
+   "p_top4": 0.9583,
    "p_relegation": 0.0,
    "position": 2
   },
@@ -290,8 +290,8 @@
    "average_position": 3.33,
    "position_low": 2,
    "position_high": 6,
-   "p_title": 0.0463,
-   "p_top4": 0.8528,
+   "p_title": 0.0462,
+   "p_top4": 0.8529,
    "p_relegation": 0.0,
    "position": 3
   },
@@ -306,8 +306,8 @@
    "average_position": 4.03,
    "position_low": 2,
    "position_high": 7,
-   "p_title": 0.0186,
-   "p_top4": 0.7208,
+   "p_title": 0.0187,
+   "p_top4": 0.7202,
    "p_relegation": 0.0,
    "position": 4
   },
@@ -323,7 +323,7 @@
    "position_low": 4,
    "position_high": 13,
    "p_title": 0.0004,
-   "p_top4": 0.1373,
+   "p_top4": 0.137,
    "p_relegation": 0.0004,
    "position": 5
   },
@@ -339,7 +339,7 @@
    "position_low": 4,
    "position_high": 13,
    "p_title": 0.0006,
-   "p_top4": 0.1278,
+   "p_top4": 0.128,
    "p_relegation": 0.0008,
    "position": 6
   },
@@ -355,8 +355,8 @@
    "position_low": 4,
    "position_high": 14,
    "p_title": 0.0001,
-   "p_top4": 0.0636,
-   "p_relegation": 0.004,
+   "p_top4": 0.0638,
+   "p_relegation": 0.0039,
    "position": 7
   },
   {
@@ -371,7 +371,7 @@
    "position_low": 4,
    "position_high": 14,
    "p_title": 0.0002,
-   "p_top4": 0.052,
+   "p_top4": 0.0522,
    "p_relegation": 0.0034,
    "position": 8
   },
@@ -388,7 +388,7 @@
    "position_high": 15,
    "p_title": 0.0,
    "p_top4": 0.0321,
-   "p_relegation": 0.0064,
+   "p_relegation": 0.0065,
    "position": 9
   },
   {
@@ -404,7 +404,7 @@
    "position_high": 16,
    "p_title": 0.0001,
    "p_top4": 0.0214,
-   "p_relegation": 0.0103,
+   "p_relegation": 0.0104,
    "position": 10
   },
   {
@@ -420,7 +420,7 @@
    "position_high": 17,
    "p_title": 0.0001,
    "p_top4": 0.0123,
-   "p_relegation": 0.0241,
+   "p_relegation": 0.024,
    "position": 11
   },
   {
@@ -435,8 +435,8 @@
    "position_low": 6,
    "position_high": 17,
    "p_title": 0.0,
-   "p_top4": 0.0094,
-   "p_relegation": 0.0319,
+   "p_top4": 0.0095,
+   "p_relegation": 0.0318,
    "position": 12
   },
   {
@@ -452,7 +452,7 @@
    "position_high": 17,
    "p_title": 0.0,
    "p_top4": 0.0073,
-   "p_relegation": 0.0355,
+   "p_relegation": 0.0354,
    "position": 13
   },
   {
@@ -467,7 +467,7 @@
    "position_low": 7,
    "position_high": 17,
    "p_title": 0.0,
-   "p_top4": 0.0047,
+   "p_top4": 0.0046,
    "p_relegation": 0.0495,
    "position": 14
   },
@@ -484,7 +484,7 @@
    "position_high": 18,
    "p_title": 0.0,
    "p_top4": 0.0018,
-   "p_relegation": 0.096,
+   "p_relegation": 0.0959,
    "position": 15
   },
   {
@@ -495,7 +495,7 @@
    "goals_for": 42.9,
    "goals_against": 69.0,
    "goal_difference": -26.1,
-   "average_position": 16.7,
+   "average_position": 16.69,
    "position_low": 12,
    "position_high": 20,
    "p_title": 0.0,
@@ -516,7 +516,7 @@
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0,
-   "p_relegation": 0.4958,
+   "p_relegation": 0.496,
    "position": 17
   },
   {
@@ -528,11 +528,11 @@
    "goals_against": 59.8,
    "goal_difference": -24.2,
    "average_position": 17.05,
-   "position_low": 12,
+   "position_low": 13,
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0,
-   "p_relegation": 0.4908,
+   "p_relegation": 0.4905,
    "position": 18
   },
   {
@@ -543,12 +543,12 @@
    "goals_for": 41.4,
    "goals_against": 70.0,
    "goal_difference": -28.5,
-   "average_position": 17.48,
+   "average_position": 17.49,
    "position_low": 13,
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0001,
-   "p_relegation": 0.574,
+   "p_relegation": 0.5743,
    "position": 19
   },
   {
