@@ -258,7 +258,7 @@
    "average_position": 1.32,
    "position_low": 1,
    "position_high": 3,
-   "p_title": 0.7631,
+   "p_title": 0.7626,
    "p_top4": 0.9963,
    "p_relegation": 0.0,
    "position": 1
@@ -274,8 +274,8 @@
    "average_position": 2.52,
    "position_low": 1,
    "position_high": 5,
-   "p_title": 0.1583,
-   "p_top4": 0.9395,
+   "p_title": 0.1587,
+   "p_top4": 0.9398,
    "p_relegation": 0.0,
    "position": 2
   },
@@ -290,8 +290,8 @@
    "average_position": 3.43,
    "position_low": 2,
    "position_high": 6,
-   "p_title": 0.0493,
-   "p_top4": 0.8165,
+   "p_title": 0.0491,
+   "p_top4": 0.8159,
    "p_relegation": 0.0,
    "position": 3
   },
@@ -306,8 +306,8 @@
    "average_position": 4.03,
    "position_low": 2,
    "position_high": 7,
-   "p_title": 0.0263,
-   "p_top4": 0.7003,
+   "p_title": 0.0265,
+   "p_top4": 0.7006,
    "p_relegation": 0.0,
    "position": 4
   },
@@ -319,12 +319,12 @@
    "goals_for": 60.1,
    "goals_against": 49.7,
    "goal_difference": 10.4,
-   "average_position": 6.54,
+   "average_position": 6.53,
    "position_low": 3,
    "position_high": 11,
-   "p_title": 0.0016,
-   "p_top4": 0.2038,
-   "p_relegation": 0.0004,
+   "p_title": 0.0018,
+   "p_top4": 0.2042,
+   "p_relegation": 0.0003,
    "position": 5
   },
   {
@@ -339,7 +339,7 @@
    "position_low": 4,
    "position_high": 13,
    "p_title": 0.0006,
-   "p_top4": 0.1125,
+   "p_top4": 0.1123,
    "p_relegation": 0.0013,
    "position": 6
   },
@@ -355,7 +355,7 @@
    "position_low": 4,
    "position_high": 13,
    "p_title": 0.0005,
-   "p_top4": 0.0844,
+   "p_top4": 0.0848,
    "p_relegation": 0.0019,
    "position": 7
   },
@@ -367,11 +367,11 @@
    "goals_for": 62.2,
    "goals_against": 59.8,
    "goal_difference": 2.4,
-   "average_position": 8.72,
+   "average_position": 8.73,
    "position_low": 4,
    "position_high": 14,
    "p_title": 0.0002,
-   "p_top4": 0.0576,
+   "p_top4": 0.0574,
    "p_relegation": 0.0037,
    "position": 8
   },
@@ -387,7 +387,7 @@
    "position_low": 5,
    "position_high": 15,
    "p_title": 0.0001,
-   "p_top4": 0.0476,
+   "p_top4": 0.0474,
    "p_relegation": 0.0049,
    "position": 9
   },
@@ -419,7 +419,7 @@
    "position_low": 6,
    "position_high": 17,
    "p_title": 0.0,
-   "p_top4": 0.0124,
+   "p_top4": 0.0125,
    "p_relegation": 0.0262,
    "position": 11
   },
@@ -435,23 +435,23 @@
    "position_low": 6,
    "position_high": 17,
    "p_title": 0.0,
-   "p_top4": 0.0079,
-   "p_relegation": 0.0314,
+   "p_top4": 0.0078,
+   "p_relegation": 0.0313,
    "position": 12
   },
   {
    "team": "Man United",
    "current_position": 19,
    "played": 38,
-   "points": 46.1,
+   "points": 46.0,
    "goals_for": 55.1,
    "goals_against": 63.1,
    "goal_difference": -8.0,
-   "average_position": 12.83,
+   "average_position": 12.84,
    "position_low": 7,
    "position_high": 18,
    "p_title": 0.0,
-   "p_top4": 0.0028,
+   "p_top4": 0.0027,
    "p_relegation": 0.0778,
    "position": 13
   },
@@ -468,7 +468,7 @@
    "position_high": 18,
    "p_title": 0.0,
    "p_top4": 0.0026,
-   "p_relegation": 0.0901,
+   "p_relegation": 0.0902,
    "position": 14
   },
   {
@@ -500,7 +500,7 @@
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0001,
-   "p_relegation": 0.4413,
+   "p_relegation": 0.4411,
    "position": 16
   },
   {
@@ -516,24 +516,8 @@
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0001,
-   "p_relegation": 0.4851,
+   "p_relegation": 0.4853,
    "position": 17
-  },
-  {
-   "team": "Hull",
-   "current_position": 11,
-   "played": 38,
-   "points": 36.1,
-   "goals_for": 37.9,
-   "goals_against": 60.4,
-   "goal_difference": -22.4,
-   "average_position": 17.39,
-   "position_low": 13,
-   "position_high": 20,
-   "p_title": 0.0,
-   "p_top4": 0.0,
-   "p_relegation": 0.559,
-   "position": 18
   },
   {
    "team": "Crystal Palace",
@@ -549,6 +533,22 @@
    "p_title": 0.0,
    "p_top4": 0.0001,
    "p_relegation": 0.5618,
+   "position": 18
+  },
+  {
+   "team": "Hull",
+   "current_position": 11,
+   "played": 38,
+   "points": 36.0,
+   "goals_for": 37.9,
+   "goals_against": 60.4,
+   "goal_difference": -22.5,
+   "average_position": 17.39,
+   "position_low": 13,
+   "position_high": 20,
+   "p_title": 0.0,
+   "p_top4": 0.0,
+   "p_relegation": 0.5588,
    "position": 19
   },
   {
@@ -564,7 +564,7 @@
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0,
-   "p_relegation": 0.6022,
+   "p_relegation": 0.6024,
    "position": 20
   }
  ]
