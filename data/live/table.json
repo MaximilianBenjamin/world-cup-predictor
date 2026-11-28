@@ -258,7 +258,7 @@
    "average_position": 1.32,
    "position_low": 1,
    "position_high": 3,
-   "p_title": 0.7626,
+   "p_title": 0.7623,
    "p_top4": 0.9963,
    "p_relegation": 0.0,
    "position": 1
@@ -274,8 +274,8 @@
    "average_position": 2.52,
    "position_low": 1,
    "position_high": 5,
-   "p_title": 0.1587,
-   "p_top4": 0.9398,
+   "p_title": 0.1588,
+   "p_top4": 0.9399,
    "p_relegation": 0.0,
    "position": 2
   },
@@ -291,7 +291,7 @@
    "position_low": 2,
    "position_high": 6,
    "p_title": 0.0491,
-   "p_top4": 0.8159,
+   "p_top4": 0.816,
    "p_relegation": 0.0,
    "position": 3
   },
@@ -323,7 +323,7 @@
    "position_low": 3,
    "position_high": 11,
    "p_title": 0.0018,
-   "p_top4": 0.2042,
+   "p_top4": 0.2041,
    "p_relegation": 0.0003,
    "position": 5
   },
@@ -339,7 +339,7 @@
    "position_low": 4,
    "position_high": 13,
    "p_title": 0.0006,
-   "p_top4": 0.1123,
+   "p_top4": 0.1121,
    "p_relegation": 0.0013,
    "position": 6
   },
@@ -371,7 +371,7 @@
    "position_low": 4,
    "position_high": 14,
    "p_title": 0.0002,
-   "p_top4": 0.0574,
+   "p_top4": 0.0573,
    "p_relegation": 0.0037,
    "position": 8
   },
@@ -383,7 +383,7 @@
    "goals_for": 55.4,
    "goals_against": 54.1,
    "goal_difference": 1.3,
-   "average_position": 9.04,
+   "average_position": 9.03,
    "position_low": 5,
    "position_high": 15,
    "p_title": 0.0001,
@@ -429,14 +429,14 @@
    "played": 38,
    "points": 48.7,
    "goals_for": 43.2,
-   "goals_against": 51.2,
+   "goals_against": 51.3,
    "goal_difference": -8.0,
    "average_position": 11.63,
    "position_low": 6,
    "position_high": 17,
    "p_title": 0.0,
    "p_top4": 0.0078,
-   "p_relegation": 0.0313,
+   "p_relegation": 0.0314,
    "position": 12
   },
   {
@@ -452,7 +452,7 @@
    "position_high": 18,
    "p_title": 0.0,
    "p_top4": 0.0027,
-   "p_relegation": 0.0778,
+   "p_relegation": 0.0779,
    "position": 13
   },
   {
@@ -467,7 +467,7 @@
    "position_low": 8,
    "position_high": 18,
    "p_title": 0.0,
-   "p_top4": 0.0026,
+   "p_top4": 0.0027,
    "p_relegation": 0.0902,
    "position": 14
   },
@@ -484,7 +484,7 @@
    "position_high": 18,
    "p_title": 0.0,
    "p_top4": 0.0022,
-   "p_relegation": 0.0892,
+   "p_relegation": 0.0891,
    "position": 15
   },
   {
@@ -500,7 +500,7 @@
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0001,
-   "p_relegation": 0.4411,
+   "p_relegation": 0.441,
    "position": 16
   },
   {
@@ -548,7 +548,7 @@
    "position_high": 20,
    "p_title": 0.0,
    "p_top4": 0.0,
-   "p_relegation": 0.5588,
+   "p_relegation": 0.5589,
    "position": 19
   },
   {
